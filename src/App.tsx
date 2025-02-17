@@ -9,6 +9,7 @@ import DataTool from "./pages/DataTool";
 import Search from "./pages/Search";
 import Documents from "./pages/Documents";
 import Chat from "./pages/Chat";
+import OfficerDetails from "./pages/OfficerDetails";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,7 +26,7 @@ const App = () => (
           <Route path="/search" element={<Search />} />
           <Route path="/documents" element={<Documents />} />
           <Route path="/chat" element={<Chat />} />
-          <Route path="/officers/:id" element={<Index />} />
+          <Route path="/officers/:id" element={<OfficerDetails />} />
           <Route path="/lawsuits" element={<Index />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
