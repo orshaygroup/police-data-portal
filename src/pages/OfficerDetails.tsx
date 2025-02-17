@@ -10,23 +10,25 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const OfficerDetails = () => {
   const { id } = useParams();
+  const officerId = parseInt(id || '0', 10);
 
   const { data: officer, isLoading: isLoadingOfficer } = useQuery({
-    queryKey: ['officer', id],
+    queryKey: ['officer', officerId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('Police_Data_Officers')
         .select('*')
-        .eq('officer_id', id)
+        .eq('officer_id', officerId)
         .single();
       
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: Boolean(officerId)
   });
 
   const { data: complaints } = useQuery({
-    queryKey: ['officer-complaints', id],
+    queryKey: ['officer-complaints', officerId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('Police_Data_Complaints')
@@ -34,52 +36,73 @@ const OfficerDetails = () => {
           *,
           Police_Data_Allegations (*)
         `)
-        .eq('officer_id', id);
+        .eq('officer_id', officerId);
       
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: Boolean(officerId)
   });
 
   const { data: useOfForce } = useQuery({
-    queryKey: ['officer-use-of-force', id],
+    queryKey: ['officer-use-of-force', officerId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('Police_Data_Use_Of_Use')
         .select('*')
-        .eq('officer_id', id);
+        .eq('officer_id', officerId);
       
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: Boolean(officerId)
   });
 
   const { data: awards } = useQuery({
-    queryKey: ['officer-awards', id],
+    queryKey: ['officer-awards', officerId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('Police_Data_Awards')
         .select('*')
-        .eq('officer_id', id);
+        .eq('officer_id', officerId);
       
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: Boolean(officerId)
   });
 
   const { data: unitHistory } = useQuery({
-    queryKey: ['officer-unit-history', id],
+    queryKey: ['officer-unit-history', officerId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('Police_Data_Officer_Unit_History')
         .select('*')
-        .eq('officer_id', id)
+        .eq('officer_id', officerId)
         .order('start_date', { ascending: false });
       
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: Boolean(officerId)
   });
+
+  if (!officerId) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-6 py-8">
+          <div className="glass-panel rounded-2xl p-8">
+            <h1 className="text-2xl text-portal-900">Invalid Officer ID</h1>
+            <p className="text-portal-600 mt-2">Please return to the search page and select a valid officer.</p>
+            <Link to="/search" className="inline-flex items-center text-portal-600 hover:text-portal-900 mt-4">
+              <ArrowLeft className="mr-2" size={20} />
+              Back to Search
+            </Link>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   if (isLoadingOfficer) {
     return (
