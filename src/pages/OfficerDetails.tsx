@@ -27,16 +27,51 @@ const OfficerDetails = () => {
     enabled: Boolean(officerId)
   });
 
+  const { data: rankHistory } = useQuery({
+    queryKey: ['officer-rank-history', officerId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('Police_Data_Officer_Rank_History')
+        .select('*')
+        .eq('officer_id', officerId)
+        .order('start_date', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: Boolean(officerId)
+  });
+
   const { data: complaints } = useQuery({
     queryKey: ['officer-complaints', officerId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('Police_Data_Complaints')
+        .from('Police_Data_Officer_Complaint_Link')
         .select(`
           *,
-          Police_Data_Allegations (*)
+          complaint:Police_Data_Complaints (
+            *,
+            allegations:Police_Data_Allegations (*),
+            investigation_outcomes:Police_Data_Investigation_Outcomes (*),
+            attachments:Police_Data_Attachments (*)
+          )
         `)
         .eq('officer_id', officerId);
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: Boolean(officerId)
+  });
+
+  const { data: unitHistory } = useQuery({
+    queryKey: ['officer-unit-history', officerId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('Police_Data_Officer_Unit_History')
+        .select('*')
+        .eq('officer_id', officerId)
+        .order('start_date', { ascending: false });
       
       if (error) throw error;
       return data;
@@ -72,14 +107,13 @@ const OfficerDetails = () => {
     enabled: Boolean(officerId)
   });
 
-  const { data: unitHistory } = useQuery({
-    queryKey: ['officer-unit-history', officerId],
+  const { data: attachments } = useQuery({
+    queryKey: ['officer-attachments', officerId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('Police_Data_Officer_Unit_History')
+        .from('Police_Data_Attachments')
         .select('*')
-        .eq('officer_id', officerId)
-        .order('start_date', { ascending: false });
+        .eq('officer_id', officerId);
       
       if (error) throw error;
       return data;
@@ -155,15 +189,15 @@ const OfficerDetails = () => {
               </dl>
             </div>
 
-            {/* Unit History */}
+            {/* Rank History */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-portal-900 mb-4">Unit History</h2>
+              <h2 className="text-xl font-semibold text-portal-900 mb-4">Rank History</h2>
               <div className="space-y-4">
-                {unitHistory?.map((unit) => (
-                  <div key={unit.id} className="border-l-2 border-portal-200 pl-4">
-                    <p className="font-medium text-portal-900">{unit.unit_name}</p>
+                {rankHistory?.map((rank) => (
+                  <div key={rank.rank_history_id} className="border-l-2 border-portal-200 pl-4">
+                    <p className="font-medium text-portal-900">{rank.rank_name}</p>
                     <p className="text-sm text-portal-500">
-                      {unit.start_date} - {unit.end_date || 'Present'}
+                      {rank.start_date} - {rank.end_date || 'Present'}
                     </p>
                   </div>
                 ))}
@@ -171,40 +205,90 @@ const OfficerDetails = () => {
             </div>
           </div>
 
-          {/* Complaints and Use of Force */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-            {/* Complaints */}
-            <div className="bg-white rounded-xl p-6 shadow-sm lg:col-span-2">
-              <h2 className="text-xl font-semibold text-portal-900 mb-4">Complaints History</h2>
-              <div className="space-y-6">
-                {complaints?.map((complaint) => (
-                  <div key={complaint.complaint_id} className="border-b border-portal-100 last:border-0 pb-4 last:pb-0">
-                    <p className="font-medium text-portal-900 mb-2">
-                      Complaint #{complaint.complaint_id}
-                    </p>
+          {/* Unit History */}
+          <div className="bg-white rounded-xl p-6 shadow-sm mb-8">
+            <h2 className="text-xl font-semibold text-portal-900 mb-4">Unit History</h2>
+            <div className="space-y-4">
+              {unitHistory?.map((unit) => (
+                <div key={unit.id} className="border-l-2 border-portal-200 pl-4">
+                  <p className="font-medium text-portal-900">{unit.unit_name}</p>
+                  <p className="text-sm text-portal-500">
+                    {unit.start_date} - {unit.end_date || 'Present'}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Complaints and Investigations */}
+          <div className="bg-white rounded-xl p-6 shadow-sm mb-8">
+            <h2 className="text-xl font-semibold text-portal-900 mb-4">Complaints and Investigations</h2>
+            <div className="space-y-6">
+              {complaints?.map((complaintLink) => {
+                const complaint = complaintLink.complaint;
+                if (!complaint) return null;
+                
+                return (
+                  <div key={complaintLink.officer_complaint_link_id} className="border-b border-portal-100 last:border-0 pb-6 last:pb-0">
+                    <div className="flex justify-between items-start mb-2">
+                      <p className="font-medium text-portal-900">
+                        Complaint #{complaint.complaint_id}
+                      </p>
+                      <span className="text-sm text-portal-500">Role: {complaintLink.role_in_incident}</span>
+                    </div>
                     <p className="text-portal-600 text-sm mb-2">
                       {complaint.complaint_type} • {complaint.incident_date}
                     </p>
-                    <p className="text-portal-500 text-sm">
-                      Finding: {complaint.final_finding || 'Pending'} •
-                      Outcome: {complaint.final_outcome || 'Pending'}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
+                    
+                    {/* Investigation Outcomes */}
+                    {complaint.investigation_outcomes?.map((outcome) => (
+                      <div key={outcome.outcome_id} className="bg-portal-50 rounded p-3 mb-2">
+                        <p className="text-sm font-medium text-portal-900">{outcome.phase_name}</p>
+                        <p className="text-sm text-portal-600">
+                          Finding: {outcome.final_finding || 'Pending'} •
+                          Outcome: {outcome.final_outcome || 'Pending'}
+                        </p>
+                      </div>
+                    ))}
 
-            {/* Use of Force */}
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-portal-900 mb-4">Use of Force Reports</h2>
-              <div className="space-y-4">
-                {useOfForce?.map((incident) => (
-                  <div key={incident.use_of_force_id} className="border-b border-portal-100 last:border-0 pb-4 last:pb-0">
-                    <p className="font-medium text-portal-900 mb-1">{incident.force_type}</p>
-                    <p className="text-sm text-portal-500">{incident.incident_date}</p>
+                    {/* Related Documents */}
+                    {complaint.attachments?.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-sm font-medium text-portal-900 mb-1">Related Documents:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {complaint.attachments.map((doc) => (
+                            <a
+                              key={doc.attachment_id}
+                              href={doc.file_url || '#'}
+                              className="text-sm text-portal-600 hover:text-portal-900 underline"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {doc.description || 'Document'}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Use of Force */}
+          <div className="bg-white rounded-xl p-6 shadow-sm mb-8">
+            <h2 className="text-xl font-semibold text-portal-900 mb-4">Use of Force Reports</h2>
+            <div className="space-y-4">
+              {useOfForce?.map((incident) => (
+                <div key={incident.use_of_force_id} className="border-b border-portal-100 last:border-0 pb-4 last:pb-0">
+                  <p className="font-medium text-portal-900 mb-1">{incident.force_type}</p>
+                  <p className="text-sm text-portal-500">{incident.incident_date}</p>
+                  {incident.description && (
+                    <p className="text-sm text-portal-600 mt-2">{incident.description}</p>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
 
