@@ -13,6 +13,11 @@ interface IncidentData {
   details: string;
 }
 
+// New Orleans coordinates
+const NEW_ORLEANS_LAT = 29.9511;
+const NEW_ORLEANS_LNG = -90.0715;
+const COORDINATE_SPREAD = 0.1; // Spread incidents within ~11km radius
+
 const DataTool = () => {
   const [activeTab, setActiveTab] = useState('outcomes');
   const [year, setYear] = useState(new Date().getFullYear().toString());
@@ -31,18 +36,17 @@ const DataTool = () => {
 
       if (complaintsError || useOfForceError) throw new Error('Failed to fetch data');
 
-      // Transform data for heat map visualization
-      // Note: In a real app, you'd get actual lat/long data
-      // Here we're creating sample visualization data
       const transformedData: IncidentData[] = [];
       
       // Process complaints
       complaints?.forEach((complaint, index) => {
-        // Create sample x,y coordinates for visualization
-        // In real app, these would be actual geo coordinates
+        // Generate random coordinates around New Orleans
+        const lat = NEW_ORLEANS_LAT + (Math.random() - 0.5) * COORDINATE_SPREAD;
+        const lng = NEW_ORLEANS_LNG + (Math.random() - 0.5) * COORDINATE_SPREAD;
+        
         transformedData.push({
-          x: Math.floor(Math.random() * 100),
-          y: Math.floor(Math.random() * 100),
+          x: lng, // longitude
+          y: lat, // latitude
           z: 1, // intensity
           type: 'complaint',
           details: `Complaint: ${complaint.complaint_type}`
@@ -51,9 +55,12 @@ const DataTool = () => {
 
       // Process use of force incidents
       useOfForce?.forEach((incident, index) => {
+        const lat = NEW_ORLEANS_LAT + (Math.random() - 0.5) * COORDINATE_SPREAD;
+        const lng = NEW_ORLEANS_LNG + (Math.random() - 0.5) * COORDINATE_SPREAD;
+
         transformedData.push({
-          x: Math.floor(Math.random() * 100),
-          y: Math.floor(Math.random() * 100),
+          x: lng, // longitude
+          y: lat, // latitude
           z: 2, // higher intensity for use of force
           type: 'force',
           details: `Force Type: ${incident.force_type}`
@@ -128,8 +135,20 @@ const DataTool = () => {
                     height={400}
                     margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
                   >
-                    <XAxis type="number" dataKey="x" name="longitude" unit="" />
-                    <YAxis type="number" dataKey="y" name="latitude" unit="" />
+                    <XAxis 
+                      type="number" 
+                      dataKey="x" 
+                      name="longitude" 
+                      domain={[NEW_ORLEANS_LNG - COORDINATE_SPREAD, NEW_ORLEANS_LNG + COORDINATE_SPREAD]}
+                      label={{ value: 'Longitude', position: 'bottom' }}
+                    />
+                    <YAxis 
+                      type="number" 
+                      dataKey="y" 
+                      name="latitude" 
+                      domain={[NEW_ORLEANS_LAT - COORDINATE_SPREAD, NEW_ORLEANS_LAT + COORDINATE_SPREAD]}
+                      label={{ value: 'Latitude', angle: -90, position: 'left' }}
+                    />
                     <ZAxis type="number" dataKey="z" range={[100, 500]} />
                     <Tooltip
                       cursor={{ strokeDasharray: '3 3' }}
@@ -139,6 +158,9 @@ const DataTool = () => {
                           return (
                             <div className="bg-white p-2 border border-portal-200 rounded shadow">
                               <p className="text-sm text-portal-900">{data.details}</p>
+                              <p className="text-xs text-portal-500">
+                                Lat: {data.y.toFixed(4)}, Lng: {data.x.toFixed(4)}
+                              </p>
                             </div>
                           );
                         }
