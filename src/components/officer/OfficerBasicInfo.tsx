@@ -6,12 +6,12 @@ import { ArrowLeft } from 'lucide-react';
 
 interface OfficerBasicInfoProps {
   officer: {
-    first_name?: string;
-    last_name?: string;
-    badge_number?: string;
-    current_rank?: string;
-    date_appointed?: string;
-    active_status?: string;
+    first_name?: string | null;
+    last_name?: string | null;
+    badge_number?: number | null;
+    current_rank?: string | null;
+    date_appointed?: string | null;
+    active_status?: string | null;
   } | null;
   isLoading: boolean;
 }
