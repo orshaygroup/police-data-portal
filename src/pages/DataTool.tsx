@@ -121,63 +121,19 @@ const DataTool = () => {
 
           {/* Map and Graphs Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            {/* Heat Map */}
+            {/* Mapbox Heat Map */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <h3 className="text-lg font-semibold text-portal-900 mb-4">Incident Distribution Heat Map</h3>
-              {isLoading ? (
-                <div className="h-[400px] flex items-center justify-center">
-                  <p className="text-portal-500">Loading data...</p>
-                </div>
-              ) : (
-                <div className="h-[400px]">
-                  <ScatterChart
-                    width={500}
-                    height={400}
-                    margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
-                  >
-                    <XAxis 
-                      type="number" 
-                      dataKey="x" 
-                      name="longitude" 
-                      domain={[NEW_ORLEANS_LNG - COORDINATE_SPREAD, NEW_ORLEANS_LNG + COORDINATE_SPREAD]}
-                      label={{ value: 'Longitude', position: 'bottom' }}
-                    />
-                    <YAxis 
-                      type="number" 
-                      dataKey="y" 
-                      name="latitude" 
-                      domain={[NEW_ORLEANS_LAT - COORDINATE_SPREAD, NEW_ORLEANS_LAT + COORDINATE_SPREAD]}
-                      label={{ value: 'Latitude', angle: -90, position: 'left' }}
-                    />
-                    <ZAxis type="number" dataKey="z" range={[100, 500]} />
-                    <Tooltip
-                      cursor={{ strokeDasharray: '3 3' }}
-                      content={({ payload }) => {
-                        if (payload && payload.length > 0) {
-                          const data = payload[0].payload as IncidentData;
-                          return (
-                            <div className="bg-white p-2 border border-portal-200 rounded shadow">
-                              <p className="text-sm text-portal-900">{data.details}</p>
-                              <p className="text-xs text-portal-500">
-                                Lat: {data.y.toFixed(4)}, Lng: {data.x.toFixed(4)}
-                              </p>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                    <Scatter data={heatmapData || []} shape="circle">
-                      {heatmapData?.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={getPointColor(entry.type, entry.z)}
-                        />
-                      ))}
-                    </Scatter>
-                  </ScatterChart>
-                </div>
-              )}
+              <div className="h-[400px] w-full">
+                <iframe 
+                  width='100%' 
+                  height='400px' 
+                  src="https://api.mapbox.com/styles/v1/krystalklean/cm7l36unb009x01qpg2jabkuf.html?title=false&access_token=pk.eyJ1Ijoia3J5c3RhbGtsZWFuIiwiYSI6ImNtN2RtaWNhNzA0eXIycW9oNXF2ZGRvN3oifQ.UcFuoQmTxIPGo12Tz8Wq5w&zoomwheel=false#10.33/30.0247/-89.9019" 
+                  title="Police Complaints Heatmap" 
+                  style={{ border: 'none', borderRadius: '0.5rem' }}
+                  allowFullScreen
+                ></iframe>
+              </div>
             </div>
 
             {/* Graphs Section */}

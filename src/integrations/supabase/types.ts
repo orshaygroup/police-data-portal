@@ -209,7 +209,9 @@ export type Database = {
           final_finding: string | null
           final_outcome: string | null
           incident_date: string | null
+          latitude: number | null
           location: string | null
+          longitude: number | null
           officer_id: number | null
         }
         Insert: {
@@ -219,7 +221,9 @@ export type Database = {
           final_finding?: string | null
           final_outcome?: string | null
           incident_date?: string | null
+          latitude?: number | null
           location?: string | null
+          longitude?: number | null
           officer_id?: number | null
         }
         Update: {
@@ -229,7 +233,9 @@ export type Database = {
           final_finding?: string | null
           final_outcome?: string | null
           incident_date?: string | null
+          latitude?: number | null
           location?: string | null
+          longitude?: number | null
           officer_id?: number | null
         }
         Relationships: [
