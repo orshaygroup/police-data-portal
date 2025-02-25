@@ -34,9 +34,16 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Map Placeholder - Will be replaced with actual Mapbox integration */}
-          <div className="bg-portal-100 rounded-2xl h-[400px] mb-12 flex items-center justify-center">
-            <p className="text-portal-500">Interactive Heat Map Coming Soon</p>
+          {/* Mapbox Integration */}
+          <div className="rounded-2xl h-[400px] mb-12 overflow-hidden">
+            <iframe 
+              width='100%' 
+              height='400px' 
+              src="https://api.mapbox.com/styles/v1/krystalklean/cm7l36unb009x01qpg2jabkuf.html?title=false&access_token=pk.eyJ1Ijoia3J5c3RhbGtsZWFuIiwiYSI6ImNtN2RtaWNhNzA0eXIycW9oNXF2ZGRvN3oifQ.UcFuoQmTxIPGo12Tz8Wq5w&zoomwheel=false#10.33/30.0247/-89.9019" 
+              title="Police Complaints Heatmap" 
+              style={{ border: 'none' }}
+              allowFullScreen
+            ></iframe>
           </div>
         </section>
 
