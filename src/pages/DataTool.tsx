@@ -208,7 +208,6 @@ const DataTool = () => {
         categoryCounts[category].total += 1;
         
         // Count as disciplined if outcome contains certain keywords
-        // Since we're working with sample data, we'll simulate discipline rates
         const isDisciplined = allegation.outcome?.toLowerCase().includes('discipline') || 
                               allegation.outcome?.toLowerCase().includes('suspend') ||
                               allegation.outcome?.toLowerCase().includes('terminate');
@@ -233,28 +232,10 @@ const DataTool = () => {
           };
         })
         .sort((a, b) => b.complaints - a.complaints)
-        .slice(0, 15); // Take top 15
-
-      // Define simulated data based on the screenshot to ensure we have enough for a good display
-      // This is because our sample data might not match exactly what's in the screenshot
-      const simulatedCategories: CategoryData[] = [
-        { name: 'Operation/Personnel Violations', complaints: 1894, disciplined: 171, disciplinePercentage: '9%', color: '#A4B8D1' },
-        { name: 'Use Of Force', complaints: 1749, disciplined: 52, disciplinePercentage: '3%', color: '#A4B8D1' },
-        { name: 'Illegal Search', complaints: 950, disciplined: 0, disciplinePercentage: '0%', color: '#A4B8D1' },
-        { name: 'False Arrest', complaints: 511, disciplined: 0, disciplinePercentage: '0%', color: '#A4B8D1' },
-        { name: 'Lockup Procedures', complaints: 498, disciplined: 60, disciplinePercentage: '12%', color: '#A4B8D1' },
-        { name: 'Verbal Abuse', complaints: 277, disciplined: 3, disciplinePercentage: '1%', color: '#A4B8D1' },
-        { name: 'Domestic', complaints: 201, disciplined: 4, disciplinePercentage: '2%', color: '#A4B8D1' },
-        { name: 'Traffic', complaints: 173, disciplined: 5, disciplinePercentage: '3%', color: '#A4B8D1' },
-        { name: 'Supervisory Responsibilities', complaints: 90, disciplined: 2, disciplinePercentage: '2%', color: '#A4B8D1' },
-        { name: 'Conduct Unbecoming (Off-Duty)', complaints: 41, disciplined: 12, disciplinePercentage: '29%', color: '#A4B8D1' },
-        { name: 'Criminal Misconduct', complaints: 35, disciplined: 11, disciplinePercentage: '31%', color: '#A4B8D1' },
-        { name: 'Racial Profiling', complaints: 25, disciplined: 0, disciplinePercentage: '0%', color: '#A4B8D1' },
-      ];
+        .slice(0, 15); // Take top 15 categories
 
       return {
-        // Use real data if we have enough categories, otherwise use simulated data
-        categories: chartData.length >= 10 ? chartData : simulatedCategories,
+        categories: chartData,
         totalCategories: Object.keys(categoryCounts).length
       };
     }
@@ -368,11 +349,16 @@ const DataTool = () => {
 
   // Function to customize the bar chart
   const renderCustomBarLabel = (props: any) => {
-    const { x, y, width, value } = props;
+    const { x, y, width, height, value, index } = props;
+    const data = categoryData?.categories[index];
+    if (!data) return null;
+    
+    const disciplineWidth = (data.disciplined / data.complaints) * width;
+    
     return (
       <g>
-        <rect x={0} y={y} width={width * 0.1} height={15} fill="#002E5D" />
-        <rect x={width * 0.1} y={y} width={width * 0.9} height={15} fill="#A4B8D1" />
+        <rect x={0} y={y} width={disciplineWidth} height={height} fill="#002E5D" />
+        <rect x={disciplineWidth} y={y} width={width - disciplineWidth} height={height} fill="#A4B8D1" />
       </g>
     );
   };
@@ -566,21 +552,29 @@ const DataTool = () => {
                       <p className="text-portal-500">Loading categories data...</p>
                     </div>
                   ) : categoryData ? (
-                    <div className="h-full overflow-y-auto">
-                      <div className="h-full relative">
-                        <ResponsiveContainer width="100%" height={Math.max(categoryData.categories.length * 30, 380)}>
+                    <div className="h-full flex flex-col">
+                      <div className="flex-1 overflow-auto pr-4">
+                        <ResponsiveContainer width="100%" height={categoryData.categories.length * 45}>
                           <BarChart
                             data={categoryData.categories}
                             layout="vertical"
-                            margin={{ top: 5, right: 30, left: 180, bottom: 5 }}
+                            margin={{ top: 10, right: 120, left: 20, bottom: 10 }}
                           >
                             <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                            <XAxis type="number" hide={true} />
+                            <XAxis 
+                              type="number" 
+                              domain={[0, 'dataMax']} 
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fontSize: 12 }}
+                            />
                             <YAxis 
                               type="category" 
                               dataKey="name" 
-                              width={170}
-                              tick={{ fontSize: 13, fill: '#555' }}
+                              width={10}
+                              axisLine={false}
+                              tickLine={false}
+                              tick={false}
                             />
                             <Tooltip
                               formatter={(value, name) => {
@@ -592,36 +586,40 @@ const DataTool = () => {
                             <Bar 
                               dataKey="complaints" 
                               fill="#A4B8D1" 
-                              barSize={15}
+                              barSize={25}
                               shape={renderCustomBarLabel}
                             >
-                              {categoryData.categories.map((entry, index) => (
-                                <Cell 
-                                  key={`cell-${index}`} 
-                                  fill={entry.color}
-                                />
-                              ))}
+                              {/* Using LabelList for detailed annotations instead of Cell */}
+                              <LabelList 
+                                dataKey="complaints" 
+                                position="insideLeft"
+                                style={{ 
+                                  fill: 'transparent', 
+                                  fontSize: 0 
+                                }}
+                              />
                             </Bar>
                           </BarChart>
                         </ResponsiveContainer>
-                        
-                        {/* Category Details Overlay */}
-                        <div className="absolute top-0 left-36 right-0 h-full pointer-events-none">
+                      </div>
+                      
+                      {/* Overlay for text that doesn't bunch up */}
+                      <div className="relative">
+                        <div className="absolute top-[-380px] left-0 right-16 bottom-0 pointer-events-none">
                           {categoryData.categories.map((category, index) => (
                             <div 
                               key={index} 
-                              className="text-sm"
+                              className="absolute text-sm flex items-center justify-between"
                               style={{ 
-                                position: 'absolute', 
-                                left: 0,
-                                top: `${index * 30 + 7}px`, // Align with bars
+                                top: `${index * 45 + 10}px`,
+                                width: '100%'
                               }}
                             >
-                              <div>
-                                <span className="font-bold text-[#555]">{category.complaints.toLocaleString()}</span>
-                                <span className="text-[#777] mx-1">—</span>
-                                <span className="text-[#777]">{category.disciplinePercentage} Disciplined</span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">{category.complaints.toLocaleString()}</span>
+                                <span className="text-gray-600">— {category.disciplinePercentage} Disciplined</span>
                               </div>
+                              <span className="font-medium text-gray-700 text-right">{category.name}</span>
                             </div>
                           ))}
                         </div>
@@ -631,7 +629,7 @@ const DataTool = () => {
                       <div className="flex items-center justify-start mt-4 space-x-8">
                         <div className="flex items-center">
                           <div className="w-4 h-4 bg-[#002E5D] mr-2"></div>
-                          <span className="text-sm text-gray-700">Disciplines</span>
+                          <span className="text-sm text-gray-700">Disciplined</span>
                         </div>
                         <div className="flex items-center">
                           <div className="w-4 h-4 bg-[#A4B8D1] mr-2"></div>
