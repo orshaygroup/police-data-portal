@@ -276,6 +276,26 @@ const DataTool = () => {
                   </button>
                   <button 
                     className={`px-4 py-2 text-sm font-medium ${
+                      activeTab === 'accused' 
+                        ? 'text-portal-900 border-b-2 border-portal-900' 
+                        : 'text-portal-500 hover:text-portal-900'
+                    }`}
+                    onClick={() => setActiveTab('accused')}
+                  >
+                    Accused
+                  </button>
+                  <button 
+                    className={`px-4 py-2 text-sm font-medium ${
+                      activeTab === 'officer-civilian' 
+                        ? 'text-portal-900 border-b-2 border-portal-900' 
+                        : 'text-portal-500 hover:text-portal-900'
+                    }`}
+                    onClick={() => setActiveTab('officer-civilian')}
+                  >
+                    Officer/Civilian
+                  </button>
+                  <button 
+                    className={`px-4 py-2 text-sm font-medium ${
                       activeTab === 'complainants' 
                         ? 'text-portal-900 border-b-2 border-portal-900' 
                         : 'text-portal-500 hover:text-portal-900'
