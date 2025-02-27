@@ -66,6 +66,12 @@ interface DemographicBarData {
   data: DemographicData[];
 }
 
+interface AllegationData {
+  name: string;
+  value: number;
+  color: string;
+}
+
 // New Orleans coordinates
 const NEW_ORLEANS_LAT = 29.9511;
 const NEW_ORLEANS_LNG = -90.0715;
@@ -383,6 +389,114 @@ const DataTool = () => {
         gender: { name: 'Gender', data: genderData },
         age: { name: 'Age', data: ageData },
         totalAccused: totalOfficers
+      };
+    }
+  });
+
+  // Fetch officer vs civilian allegations data
+  const { data: officerCivilianData, isLoading: isLoadingOfficerCivilian } = useQuery({
+    queryKey: ['officer-civilian-allegations'],
+    queryFn: async () => {
+      // First get all allegations
+      const { data: allegations, error: allegationsError } = await supabase
+        .from('Police_Data_Allegations')
+        .select('*');
+
+      if (allegationsError) throw new Error('Failed to fetch allegations');
+
+      // Get officer allegations (allegations that are linked to officers)
+      const { data: officerAllegations, error: officerAllegationsError } = await supabase
+        .from('Police_Data_Officer_Allegation_Link')
+        .select('allegation_id');
+
+      if (officerAllegationsError) throw new Error('Failed to fetch officer allegations links');
+
+      // Create set of officer allegation IDs for fast lookup
+      const officerAllegationIds = new Set(officerAllegations.map(link => link.allegation_id));
+      
+      // Categorize allegations as officer or civilian
+      let totalOfficerAllegations = 0;
+      let officerSustained = 0;
+      let officerUnsustained = 0;
+
+      let totalCivilianAllegations = 0;
+      let civilianSustained = 0;
+      let civilianUnsustained = 0;
+
+      let unknownAllegations = 0;
+
+      allegations.forEach(allegation => {
+        const isOfficerAllegation = allegation.allegation_id && officerAllegationIds.has(allegation.allegation_id);
+        
+        if (isOfficerAllegation) {
+          totalOfficerAllegations++;
+          
+          // Check if sustained (using the finding field)
+          const isSustained = allegation.finding?.toLowerCase().includes('sustained');
+          if (isSustained) {
+            officerSustained++;
+          } else {
+            officerUnsustained++;
+          }
+        } else if (allegation.allegation_id) {
+          // If it has an ID but is not linked to an officer, it's a civilian allegation
+          totalCivilianAllegations++;
+          
+          // Check if sustained
+          const isSustained = allegation.finding?.toLowerCase().includes('sustained');
+          if (isSustained) {
+            civilianSustained++;
+          } else {
+            civilianUnsustained++;
+          }
+        } else {
+          // For allegations without a clear ID or association
+          unknownAllegations++;
+        }
+      });
+
+      // Format data for pie charts
+      const officerAllegationsData: AllegationData[] = [
+        { name: 'Unsustained', value: officerUnsustained, color: '#FFE2E0' }, // Light pink
+        { name: 'Sustained', value: officerSustained, color: '#FF6B6B' }      // Bright red
+      ];
+      
+      const civilianAllegationsData: AllegationData[] = [
+        { name: 'Unsustained', value: civilianUnsustained, color: '#FFE2E0' }, // Light pink
+        { name: 'Sustained', value: civilianSustained, color: '#FF6B6B' }      // Bright red
+      ];
+      
+      // Format data for horizontal bar chart
+      const barChartData = [
+        { 
+          name: 'Unknown', 
+          value: unknownAllegations, 
+          color: '#E0E0E0',  // Light gray
+          fill: '#E0E0E0' 
+        },
+        { 
+          name: 'Civilian Allegations', 
+          value: totalCivilianAllegations, 
+          color: '#F0F0F0',  // Very light gray
+          fill: '#F0F0F0'
+        }
+      ];
+
+      return {
+        officerAllegations: {
+          data: officerAllegationsData,
+          total: totalOfficerAllegations,
+          sustained: officerSustained,
+          unsustained: officerUnsustained
+        },
+        civilianAllegations: {
+          data: civilianAllegationsData,
+          total: totalCivilianAllegations,
+          sustained: civilianSustained,
+          unsustained: civilianUnsustained
+        },
+        barChart: barChartData,
+        unknown: unknownAllegations
       };
     }
   });
@@ -860,6 +974,120 @@ const DataTool = () => {
                   ) : (
                     <div className="h-full flex items-center justify-center">
                       <p className="text-portal-500">No accused officer data available</p>
+                    </div>
+                  )
+                ) : activeTab === 'officer-civilian' ? (
+                  isLoadingOfficerCivilian ? (
+                    <div className="h-full flex items-center justify-center">
+                      <p className="text-portal-500">Loading officer/civilian data...</p>
+                    </div>
+                  ) : officerCivilianData ? (
+                    <div className="h-full">
+                      {/* Two pie charts side by side */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 border-b pb-6">
+                        {/* Civilian Allegations */}
+                        <div className="text-center">
+                          <h3 className="text-lg font-medium text-gray-700 mb-2">Civilian Allegations</h3>
+                          <div className="h-[180px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <PieChart>
+                                <Pie
+                                  data={officerCivilianData.civilianAllegations.data}
+                                  dataKey="value"
+                                  cx="50%"
+                                  cy="50%"
+                                  innerRadius={50}
+                                  outerRadius={70}
+                                >
+                                  {officerCivilianData.civilianAllegations.data.map((entry, index) => (
+                                    <Cell key={`cell-civilian-${index}`} fill={entry.color} />
+                                  ))}
+                                </Pie>
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </div>
+                          <div className="flex flex-col mt-4 space-y-1">
+                            <div className="flex items-center space-x-2">
+                              <span className="h-3 w-3 rounded-full bg-[#FFE2E0]"></span>
+                              <span className="font-bold">{officerCivilianData.civilianAllegations.unsustained.toLocaleString()}</span>
+                              <span className="text-gray-600">Unsustained</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="h-3 w-3 rounded-full bg-[#FF6B6B]"></span>
+                              <span className="font-bold">{officerCivilianData.civilianAllegations.sustained.toLocaleString()}</span>
+                              <span className="text-gray-600">Sustained</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Officer Allegations */}
+                        <div className="text-center">
+                          <h3 className="text-lg font-medium text-gray-700 mb-2">Officer Allegations</h3>
+                          <div className="h-[180px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <PieChart>
+                                <Pie
+                                  data={officerCivilianData.officerAllegations.data}
+                                  dataKey="value"
+                                  cx="50%"
+                                  cy="50%"
+                                  innerRadius={50}
+                                  outerRadius={70}
+                                >
+                                  {officerCivilianData.officerAllegations.data.map((entry, index) => (
+                                    <Cell key={`cell-officer-${index}`} fill={entry.color} />
+                                  ))}
+                                </Pie>
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </div>
+                          <div className="flex flex-col mt-4 space-y-1">
+                            <div className="flex items-center space-x-2">
+                              <span className="h-3 w-3 rounded-full bg-[#FFE2E0]"></span>
+                              <span className="font-bold">{officerCivilianData.officerAllegations.unsustained.toLocaleString()}</span>
+                              <span className="text-gray-600">Unsustained</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="h-3 w-3 rounded-full bg-[#FF6B6B]"></span>
+                              <span className="font-bold">{officerCivilianData.officerAllegations.sustained.toLocaleString()}</span>
+                              <span className="text-gray-600">Sustained</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Horizontal bar chart */}
+                      <div className="mt-6">
+                        <div className="h-[80px]">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart
+                              layout="vertical"
+                              data={officerCivilianData.barChart}
+                              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                            >
+                              <XAxis type="number" hide />
+                              <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={120} />
+                              <Bar dataKey="value" fill="#F0F0F0" />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                        
+                        {/* Values below the bar chart */}
+                        <div className="flex mt-2">
+                          <div className="flex-1">
+                            <div className="font-bold">{officerCivilianData.unknown}</div>
+                            <div className="text-sm text-gray-600">Unknown</div>
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-bold">{officerCivilianData.civilianAllegations.total.toLocaleString()}</div>
+                            <div className="text-sm text-gray-600">Civilian Allegations</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="h-full flex items-center justify-center">
+                      <p className="text-portal-500">No officer/civilian data available</p>
                     </div>
                   )
                 ) : (
