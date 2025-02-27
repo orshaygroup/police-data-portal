@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, Tooltip, Cell } from 'recharts';
 import { Link } from 'react-router-dom';
-import { ChevronDown, ChevronUp, Plus, Minus, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus, Minus, ChevronLeft, ChevronRight, FileText, Download } from 'lucide-react';
 
 interface IncidentData {
   x: number;
@@ -144,7 +144,7 @@ const DataTool = () => {
       const { data: complaintLinks, error: linksError } = await supabase
         .from('Police_Data_Officer_Complaint_Link')
         .select(`
-          complaint_id,
+          officer_complaint_link_id,
           role_in_incident,
           complaint:Police_Data_Complaints (
             complaint_id,
@@ -318,162 +318,174 @@ const DataTool = () => {
               ) : (
                 officers?.slice(0, 12).map((officer) => (
                   <div key={officer.officer_id} className="border border-portal-200 rounded-lg bg-white overflow-hidden">
-                    <div className="p-4 border-b border-portal-100">
-                      <Link to={`/officer/${officer.officer_id}`} className="font-bold text-lg text-portal-900 hover:text-portal-700">
+                    <div className="p-4">
+                      <Link to={`/officers/${officer.officer_id}`} className="font-bold text-lg text-portal-900 hover:text-portal-700">
                         {officer.first_name} {officer.last_name}
                       </Link>
-                      <p className="text-sm text-portal-600">
+                      <p className="text-sm text-portal-600 mb-3">
                         {officer.gender}, {officer.race}
                       </p>
-                    </div>
-                    
-                    <div 
-                      className="p-4 flex justify-between items-center cursor-pointer hover:bg-portal-50"
-                      onClick={() => toggleOfficer(officer.officer_id)}
-                    >
-                      <div className="flex items-center">
-                        {selectedOfficer === officer.officer_id ? (
-                          <Minus size={16} className="mr-2 text-portal-600" />
-                        ) : (
-                          <Plus size={16} className="mr-2 text-portal-600" />
-                        )}
-                        <span className="text-sm font-medium">Complaints</span>
+                      
+                      <div 
+                        className="flex justify-between items-center cursor-pointer hover:bg-portal-50 p-2 rounded"
+                        onClick={() => toggleOfficer(officer.officer_id)}
+                      >
+                        <div className="flex items-center">
+                          {selectedOfficer === officer.officer_id ? (
+                            <Minus size={16} className="mr-2 text-portal-600" />
+                          ) : (
+                            <Plus size={16} className="mr-2 text-portal-600" />
+                          )}
+                          <span className="text-sm font-medium">Complaints</span>
+                        </div>
+                        <span className="bg-portal-100 px-2 py-1 rounded-full text-xs font-medium">
+                          {officer.complaint_count}
+                        </span>
                       </div>
-                      <span className="bg-portal-100 px-2 py-1 rounded-full text-xs font-medium">
-                        {officer.complaint_count}
-                      </span>
                     </div>
-                    
-                    {/* Expandable Complaints Table */}
-                    {selectedOfficer === officer.officer_id && (
-                      <div className="border-t border-portal-100 p-4">
-                        {isLoadingComplaints ? (
-                          <p className="text-center py-4 text-portal-500">Loading complaints...</p>
-                        ) : complaints?.length === 0 ? (
-                          <p className="text-center py-4 text-portal-500">No complaints found</p>
-                        ) : (
-                          <div className="overflow-x-auto">
-                            <table className="min-w-full text-sm">
-                              <thead>
-                                <tr className="border-b border-portal-200">
-                                  <th className="text-left py-2 px-3 font-medium text-portal-600">Category</th>
-                                  <th className="text-left py-2 px-3 font-medium text-portal-600">CRID</th>
-                                  <th className="text-left py-2 px-3 font-medium text-portal-600">Incident Date</th>
-                                  <th className="text-left py-2 px-3 font-medium text-portal-600">Officer</th>
-                                  <th className="text-left py-2 px-3 font-medium text-portal-600">Attachments</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {complaints?.map((complaint) => (
-                                  <React.Fragment key={complaint.complaint_id}>
-                                    <tr 
-                                      className="border-b border-portal-100 hover:bg-portal-50 cursor-pointer"
-                                      onClick={() => toggleComplaint(complaint.complaint_id)}
-                                    >
-                                      <td className="py-2 px-3">
-                                        <div className="flex items-center">
-                                          {expandedComplaint === complaint.complaint_id ? (
-                                            <ChevronUp size={16} className="mr-2" />
-                                          ) : (
-                                            <ChevronDown size={16} className="mr-2" />
-                                          )}
-                                          <div>
-                                            {complaint.final_finding === "Not Sustained" && (
-                                              <span className="text-xs text-blue-500 block">Not Sustained</span>
-                                            )}
-                                            {complaint.final_finding === "Exonerated" && (
-                                              <span className="text-xs text-green-500 block">Exonerated</span>
-                                            )}
-                                            {complaint.final_finding === "Unfounded" && (
-                                              <span className="text-xs text-orange-500 block">Unfounded</span>
-                                            )}
-                                            {complaint.category}
-                                          </div>
-                                        </div>
-                                      </td>
-                                      <td className="py-2 px-3">{complaint.crid}</td>
-                                      <td className="py-2 px-3">{complaint.incident_date}</td>
-                                      <td className="py-2 px-3">{complaint.officer_name}</td>
-                                      <td className="py-2 px-3">
-                                        {complaint.attachments > 0 ? (
-                                          <span className="flex items-center">
-                                            <FileText size={14} className="mr-1" />
-                                            {complaint.attachments} linked
-                                          </span>
-                                        ) : (
-                                          <span className="text-portal-400">0 linked</span>
-                                        )}
-                                      </td>
-                                    </tr>
-                                    {expandedComplaint === complaint.complaint_id && (
-                                      <tr className="bg-portal-50">
-                                        <td colSpan={5} className="p-3">
-                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                              <h4 className="font-medium mb-2">Category</h4>
-                                              <p className="text-portal-600 mb-4">{complaint.category}</p>
-                                              
-                                              <h4 className="font-medium mb-2">Final Finding</h4>
-                                              <p className="text-portal-600 mb-4">{complaint.final_finding || "Pending"}</p>
-                                              
-                                              <h4 className="font-medium mb-2">Final Outcome</h4>
-                                              <p className="text-portal-600">{complaint.final_outcome || "No Action Taken"}</p>
-                                            </div>
-                                            
-                                            <div>
-                                              <h4 className="font-medium mb-2">Investigation Timeline</h4>
-                                              <div className="relative pl-6 pb-3 border-l border-portal-300">
-                                                <div className="absolute left-0 top-0 w-3 h-3 -ml-1.5 rounded-full bg-portal-500"></div>
-                                                <p className="font-medium">Incident Date</p>
-                                                <p className="text-portal-600 mb-4">Investigation Begins<br/>{complaint.incident_date}</p>
-                                                
-                                                <div className="absolute left-0 bottom-0 w-3 h-3 -ml-1.5 rounded-full bg-portal-500"></div>
-                                                <p className="font-medium">Investigation Closed (Unknown)</p>
-                                                <p className="text-portal-600">One year later</p>
-                                              </div>
-                                            </div>
-                                          </div>
-                                          
-                                          <div className="mt-4">
-                                            <h4 className="font-medium mb-2">Complaining Witness</h4>
-                                            <div className="flex flex-wrap gap-2">
-                                              <span className="bg-portal-100 px-3 py-1 rounded-full text-sm">White, Male</span>
-                                              <span className="bg-portal-100 px-3 py-1 rounded-full text-sm">Black, Male</span>
-                                            </div>
-                                          </div>
-                                          
-                                          <div className="mt-4 grid grid-cols-2 gap-4">
-                                            <div>
-                                              <h4 className="font-medium mb-2">Address</h4>
-                                              <p className="text-portal-600">CHICAGO IL</p>
-                                            </div>
-                                            <div>
-                                              <h4 className="font-medium mb-2">Location Type</h4>
-                                              <p className="text-portal-600">Urban</p>
-                                            </div>
-                                          </div>
-                                          
-                                          <div className="mt-4">
-                                            <h4 className="font-medium mb-2">Documents</h4>
-                                            <button className="text-portal-600 hover:text-portal-900 px-3 py-1 bg-portal-100 rounded-md text-sm">
-                                              Request
-                                            </button>
-                                          </div>
-                                        </td>
-                                      </tr>
-                                    )}
-                                  </React.Fragment>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
-                      </div>
-                    )}
                   </div>
                 ))
               )}
             </div>
+            
+            {/* Complaints Section - Only shown when an officer is selected */}
+            {selectedOfficer && (
+              <div className="mt-12 bg-white rounded-xl p-6 shadow-sm">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-bold text-portal-900">
+                    Complaints ({complaints?.length || 0})
+                  </h2>
+                  <button className="flex items-center px-3 py-1 bg-portal-100 text-portal-700 rounded hover:bg-portal-200">
+                    <Download size={16} className="mr-2" />
+                    Download Table
+                  </button>
+                </div>
+                
+                {isLoadingComplaints ? (
+                  <div className="flex justify-center py-12">
+                    <p>Loading complaints...</p>
+                  </div>
+                ) : complaints?.length === 0 ? (
+                  <p className="text-center py-4 text-portal-500">No complaints found</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full border-collapse">
+                      <thead>
+                        <tr className="border-b border-portal-200">
+                          <th className="text-left py-3 px-4 font-medium text-portal-600">Category</th>
+                          <th className="text-left py-3 px-4 font-medium text-portal-600">CRID</th>
+                          <th className="text-left py-3 px-4 font-medium text-portal-600">Incident Date</th>
+                          <th className="text-left py-3 px-4 font-medium text-portal-600">Officer</th>
+                          <th className="text-left py-3 px-4 font-medium text-portal-600">Attachments</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {complaints?.map((complaint) => (
+                          <React.Fragment key={complaint.complaint_id}>
+                            <tr 
+                              className="border-b border-portal-100 hover:bg-portal-50 cursor-pointer"
+                              onClick={() => toggleComplaint(complaint.complaint_id)}
+                            >
+                              <td className="py-3 px-4">
+                                <div className="flex items-center">
+                                  {expandedComplaint === complaint.complaint_id ? (
+                                    <ChevronUp size={16} className="mr-2" />
+                                  ) : (
+                                    <ChevronDown size={16} className="mr-2" />
+                                  )}
+                                  <div>
+                                    {complaint.final_finding === "Not Sustained" && (
+                                      <span className="text-xs text-blue-500 block">Not Sustained</span>
+                                    )}
+                                    {complaint.final_finding === "Exonerated" && (
+                                      <span className="text-xs text-green-500 block">Exonerated</span>
+                                    )}
+                                    {complaint.final_finding === "Unfounded" && (
+                                      <span className="text-xs text-orange-500 block">Unfounded</span>
+                                    )}
+                                    {complaint.category}
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">{complaint.crid}</td>
+                              <td className="py-3 px-4">{complaint.incident_date}</td>
+                              <td className="py-3 px-4">{complaint.officer_name}</td>
+                              <td className="py-3 px-4">
+                                {complaint.attachments > 0 ? (
+                                  <span className="flex items-center">
+                                    <FileText size={14} className="mr-1" />
+                                    {complaint.attachments} linked
+                                  </span>
+                                ) : (
+                                  <span className="text-portal-400">0 linked</span>
+                                )}
+                              </td>
+                            </tr>
+                            {expandedComplaint === complaint.complaint_id && (
+                              <tr className="bg-portal-50">
+                                <td colSpan={5} className="p-4">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                      <h4 className="font-medium mb-2">Category</h4>
+                                      <p className="text-portal-600 mb-4">{complaint.category}</p>
+                                      
+                                      <h4 className="font-medium mb-2">Final Finding</h4>
+                                      <p className="text-portal-600 mb-4">{complaint.final_finding || "Pending"}</p>
+                                      
+                                      <h4 className="font-medium mb-2">Final Outcome</h4>
+                                      <p className="text-portal-600">{complaint.final_outcome || "No Action Taken"}</p>
+                                    </div>
+                                    
+                                    <div>
+                                      <h4 className="font-medium mb-2">Investigation Timeline</h4>
+                                      <div className="relative pl-6 pb-3 border-l border-portal-300">
+                                        <div className="absolute left-0 top-0 w-3 h-3 -ml-1.5 rounded-full bg-portal-500"></div>
+                                        <p className="font-medium">Incident Date</p>
+                                        <p className="text-portal-600 mb-4">Investigation Begins<br/>{complaint.incident_date}</p>
+                                        
+                                        <div className="absolute left-0 bottom-0 w-3 h-3 -ml-1.5 rounded-full bg-portal-500"></div>
+                                        <p className="font-medium">Investigation Closed (Unknown)</p>
+                                        <p className="text-portal-600">One year later</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="mt-4">
+                                    <h4 className="font-medium mb-2">Complaining Witness</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                      <span className="bg-portal-100 px-3 py-1 rounded-full text-sm">White, Male</span>
+                                      <span className="bg-portal-100 px-3 py-1 rounded-full text-sm">Black, Male</span>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="mt-4 grid grid-cols-2 gap-4">
+                                    <div>
+                                      <h4 className="font-medium mb-2">Address</h4>
+                                      <p className="text-portal-600">CHICAGO IL</p>
+                                    </div>
+                                    <div>
+                                      <h4 className="font-medium mb-2">Location Type</h4>
+                                      <p className="text-portal-600">Urban</p>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="mt-4">
+                                    <h4 className="font-medium mb-2">Documents</h4>
+                                    <button className="text-portal-600 hover:text-portal-900 px-3 py-1 bg-portal-100 rounded-md text-sm">
+                                      Request
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
