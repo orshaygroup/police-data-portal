@@ -54,6 +54,18 @@ interface CategoryData {
   color: string;
 }
 
+interface DemographicData {
+  name: string;
+  value: number;
+  percentage: number;
+  color: string;
+}
+
+interface DemographicBarData {
+  name: string;
+  data: DemographicData[];
+}
+
 // New Orleans coordinates
 const NEW_ORLEANS_LAT = 29.9511;
 const NEW_ORLEANS_LNG = -90.0715;
@@ -241,6 +253,140 @@ const DataTool = () => {
     }
   });
 
+  // Fetch accused demographic data
+  const { data: accusedData, isLoading: isLoadingAccused } = useQuery({
+    queryKey: ['accused-demographics'],
+    queryFn: async () => {
+      // Get all officers
+      const { data: officers, error: officersError } = await supabase
+        .from('Police_Data_Officers')
+        .select('*');
+
+      if (officersError) throw new Error('Failed to fetch officers data');
+
+      // Get officer allegations/complaints
+      const { data: officerAllegations, error: allegationsError } = await supabase
+        .from('Police_Data_Officer_Allegation_Link')
+        .select('officer_id');
+
+      if (allegationsError) throw new Error('Failed to fetch officer allegations');
+
+      const { data: officerComplaints, error: complaintsError } = await supabase
+        .from('Police_Data_Officer_Complaint_Link')
+        .select('officer_id');
+
+      if (complaintsError) throw new Error('Failed to fetch officer complaints');
+
+      // Combine all officer IDs from allegations and complaints (unique)
+      const accusedOfficerIds = new Set([
+        ...officerAllegations.map(a => a.officer_id),
+        ...officerComplaints.map(c => c.officer_id)
+      ].filter(id => id !== null));
+      
+      // Filter to only get officers who have allegations/complaints
+      const accusedOfficers = officers.filter(o => accusedOfficerIds.has(o.officer_id));
+      
+      // Process race demographics
+      const raceCounts: Record<string, number> = {};
+      accusedOfficers.forEach(officer => {
+        const race = officer.race || 'Unknown';
+        raceCounts[race] = (raceCounts[race] || 0) + 1;
+      });
+      
+      // Process gender demographics
+      const genderCounts: Record<string, number> = {};
+      accusedOfficers.forEach(officer => {
+        const gender = officer.gender || 'Unknown';
+        genderCounts[gender] = (genderCounts[gender] || 0) + 1;
+      });
+      
+      // Calculate approximate age groups based on birth date (if available)
+      const ageCounts: Record<string, number> = {
+        '20-30': 0,
+        '31-40': 0,
+        '41-50': 0,
+        '51-60': 0,
+        '61+': 0,
+        'Unknown': 0
+      };
+      
+      accusedOfficers.forEach(officer => {
+        if (!officer.date_of_birth) {
+          ageCounts['Unknown']++;
+          return;
+        }
+        
+        const birthYear = parseInt(officer.date_of_birth.split('-')[0]);
+        if (isNaN(birthYear)) {
+          ageCounts['Unknown']++;
+          return;
+        }
+        
+        const age = new Date().getFullYear() - birthYear;
+        
+        if (age <= 30) ageCounts['20-30']++;
+        else if (age <= 40) ageCounts['31-40']++;
+        else if (age <= 50) ageCounts['41-50']++;
+        else if (age <= 60) ageCounts['51-60']++;
+        else ageCounts['61+']++;
+      });
+      
+      // Format the data for the charts
+      const totalOfficers = accusedOfficers.length;
+      
+      // Colors for the stacked bars
+      const colors = [
+        '#1E40AF', // Deep Blue
+        '#3B82F6', // Medium Blue
+        '#93C5FD', // Light Blue
+        '#BFDBFE', // Pale Blue
+        '#2563EB', // Royal Blue
+      ];
+      
+      // Generate race data
+      const raceData: DemographicData[] = Object.entries(raceCounts)
+        .map(([race, count], index) => ({
+          name: race,
+          value: count,
+          percentage: Math.round((count / totalOfficers) * 100),
+          color: colors[index % colors.length]
+        }))
+        .sort((a, b) => b.value - a.value);
+      
+      // Generate gender data
+      const genderData: DemographicData[] = Object.entries(genderCounts)
+        .map(([gender, count], index) => ({
+          name: gender,
+          value: count,
+          percentage: Math.round((count / totalOfficers) * 100),
+          color: colors[index % colors.length]
+        }))
+        .sort((a, b) => b.value - a.value);
+      
+      // Generate age data
+      const ageData: DemographicData[] = Object.entries(ageCounts)
+        .filter(([age, count]) => age !== 'Unknown' && count > 0)
+        .map(([age, count], index) => ({
+          name: age,
+          value: count,
+          percentage: Math.round((count / totalOfficers) * 100),
+          color: colors[index % colors.length]
+        }))
+        .sort((a, b) => {
+          // Special sort for age ranges
+          const ageOrder = ['20-30', '31-40', '41-50', '51-60', '61+'];
+          return ageOrder.indexOf(a.name) - ageOrder.indexOf(b.name);
+        });
+      
+      return {
+        race: { name: 'Race', data: raceData },
+        gender: { name: 'Gender', data: genderData },
+        age: { name: 'Age', data: ageData },
+        totalAccused: totalOfficers
+      };
+    }
+  });
+
   // Fetch officers with complaint counts
   const { data: officers, isLoading: isLoadingOfficers } = useQuery({
     queryKey: ['officers-with-complaints'],
@@ -347,7 +493,7 @@ const DataTool = () => {
 
   const percentageInfo = calculatePercentage();
 
-  // Function to customize the bar chart
+  // Function to customize the category bar chart
   const renderCustomBarLabel = (props: any) => {
     const { x, y, width, height, value, index } = props;
     const data = categoryData?.categories[index];
@@ -360,6 +506,64 @@ const DataTool = () => {
         <rect x={0} y={y} width={disciplineWidth} height={height} fill="#002E5D" />
         <rect x={disciplineWidth} y={y} width={width - disciplineWidth} height={height} fill="#A4B8D1" />
       </g>
+    );
+  };
+
+  // Function to render demographic stacked bars
+  const renderDemographicBar = (data: DemographicBarData) => {
+    if (!data || !data.data || data.data.length === 0) return null;
+    
+    // Calculate cumulative percentages for positioning the segments
+    let cumulativePercentage = 0;
+    const segmentsWithPosition = data.data.map(item => {
+      const startPosition = cumulativePercentage;
+      cumulativePercentage += item.percentage;
+      return {
+        ...item,
+        startPosition,
+        endPosition: cumulativePercentage
+      };
+    });
+    
+    return (
+      <div className="mb-12">
+        <h3 className="text-lg font-bold mb-2">{data.name}</h3>
+        
+        {/* Stacked percentage bar */}
+        <div className="relative h-10 bg-gray-200 rounded-sm overflow-hidden mb-2">
+          {segmentsWithPosition.map((segment, index) => (
+            <div
+              key={index}
+              className="absolute top-0 h-full"
+              style={{
+                left: `${segment.startPosition}%`,
+                width: `${segment.percentage}%`,
+                backgroundColor: segment.color,
+              }}
+            />
+          ))}
+        </div>
+        
+        {/* Markers and percentages */}
+        <div className="relative h-6">
+          {segmentsWithPosition.map((segment, index) => (
+            <div
+              key={index}
+              className="absolute flex flex-col items-center"
+              style={{
+                left: `${segment.startPosition + (segment.percentage / 2)}%`,
+                transform: 'translateX(-50%)'
+              }}
+            >
+              <span className="text-xl font-bold">+</span>
+              <div className="text-center">
+                <div className="font-bold">{segment.percentage}%</div>
+                <div className="text-sm">{segment.name}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     );
   };
 
@@ -477,7 +681,7 @@ const DataTool = () => {
                 </div>
               </div>
               
-              <div className="h-[380px] w-full">
+              <div className="h-[380px] w-full overflow-y-auto">
                 {activeTab === 'outcomes' ? (
                   isLoadingOutcomes ? (
                     <div className="h-full flex items-center justify-center">
@@ -640,6 +844,22 @@ const DataTool = () => {
                   ) : (
                     <div className="h-full flex items-center justify-center">
                       <p className="text-portal-500">No categories data available</p>
+                    </div>
+                  )
+                ) : activeTab === 'accused' ? (
+                  isLoadingAccused ? (
+                    <div className="h-full flex items-center justify-center">
+                      <p className="text-portal-500">Loading accused officer data...</p>
+                    </div>
+                  ) : accusedData ? (
+                    <div className="h-full pt-4 overflow-y-auto">
+                      {renderDemographicBar(accusedData.race)}
+                      {renderDemographicBar(accusedData.gender)}
+                      {renderDemographicBar(accusedData.age)}
+                    </div>
+                  ) : (
+                    <div className="h-full flex items-center justify-center">
+                      <p className="text-portal-500">No accused officer data available</p>
                     </div>
                   )
                 ) : (
