@@ -449,54 +449,56 @@ const DataTool = () => {
       });
       
       // Format the data for the charts
-      const totalComplainants = complainants.length;
+      const totalComplainants = complainants.length || 1; // Avoid division by zero
       
       // Colors for the stacked bars
-      const raceColors = {
-        'Black': '#1E40AF', // Deep Blue
-        'White': '#93C5FD', // Medium Blue 
-        'Hispanic': '#BFDBFE', // Light Blue
-        'Pacific Islander': '#DBEAFE', // Very Light Blue
-        'Asian': '#EFF6FF',  // Pale Blue
-        'Unknown': '#F1F5F9'  // Gray Blue
-      };
-      
-      const genderColors = {
-        'Male': '#1E40AF',   // Deep Blue
-        'Female': '#93C5FD', // Light Blue
-        'Unknown': '#F1F5F9' // Gray Blue
-      };
-      
-      const ageColors = {
-        '21-30': '#1E40AF', // Deep Blue
-        '31-40': '#3B82F6', // Medium Blue
-        '41-50': '#93C5FD', // Light Blue
-        '51+': '#BFDBFE',   // Very Light Blue
-        'Unknown': '#F1F5F9' // Gray Blue
-      };
-  
-      // Generate race data - match the specific percentages from the example for the UI
-      // This is based on the mock-up, with actual percentages calculated from real data
-      const raceData: DemographicData[] = [
-        { name: 'Black', value: totalComplainants * 0.87, percentage: 87, color: raceColors['Black'] },
-        { name: 'White', value: totalComplainants * 0.09, percentage: 9, color: raceColors['White'] },
-        { name: 'Hispanic', value: totalComplainants * 0.03, percentage: 3, color: raceColors['Hispanic'] },
-        { name: 'Pacific Islander', value: totalComplainants * 0.01, percentage: 1, color: raceColors['Pacific Islander'] }
+      const colors = [
+        '#1E40AF', // Deep Blue
+        '#3B82F6', // Medium Blue
+        '#93C5FD', // Light Blue
+        '#BFDBFE', // Pale Blue
+        '#2563EB', // Royal Blue
+        '#DBEAFE', // Very Light Blue
+        '#EFF6FF', // Pale Blue
+        '#F1F5F9', // Gray Blue
       ];
       
-      // Generate gender data - match the specific percentages from the example for the UI
-      const genderData: DemographicData[] = [
-        { name: 'Male', value: totalComplainants * 0.58, percentage: 58, color: genderColors['Male'] },
-        { name: 'Female', value: totalComplainants * 0.42, percentage: 42, color: genderColors['Female'] }
-      ];
+      // Generate race data from actual database counts
+      const raceData: DemographicData[] = Object.entries(raceCounts)
+        .filter(([race, count]) => count > 0)
+        .map(([race, count], index) => ({
+          name: race,
+          value: count,
+          percentage: Math.round((count / totalComplainants) * 100),
+          color: colors[index % colors.length]
+        }))
+        .sort((a, b) => b.value - a.value);
       
-      // Generate age data - match the specific percentages from the example for the UI
-      const ageData: DemographicData[] = [
-        { name: '21-30', value: totalComplainants * 0.17, percentage: 17, color: ageColors['21-30'] },
-        { name: '31-40', value: totalComplainants * 0.33, percentage: 33, color: ageColors['31-40'] },
-        { name: '41-50', value: totalComplainants * 0.17, percentage: 17, color: ageColors['41-50'] },
-        { name: '51+', value: totalComplainants * 0.33, percentage: 33, color: ageColors['51+'] }
-      ];
+      // Generate gender data from actual database counts
+      const genderData: DemographicData[] = Object.entries(genderCounts)
+        .filter(([gender, count]) => count > 0)
+        .map(([gender, count], index) => ({
+          name: gender,
+          value: count,
+          percentage: Math.round((count / totalComplainants) * 100),
+          color: colors[index % colors.length]
+        }))
+        .sort((a, b) => b.value - a.value);
+      
+      // Generate age data from actual database counts
+      const ageData: DemographicData[] = Object.entries(ageCounts)
+        .filter(([age, count]) => age !== 'Unknown' && count > 0)
+        .map(([age, count], index) => ({
+          name: age,
+          value: count,
+          percentage: Math.round((count / totalComplainants) * 100),
+          color: colors[index % colors.length]
+        }))
+        .sort((a, b) => {
+          // Special sort for age ranges
+          const ageOrder = ['21-30', '31-40', '41-50', '51+'];
+          return ageOrder.indexOf(a.name) - ageOrder.indexOf(b.name);
+        });
       
       return {
         race: { name: 'Race', data: raceData },
@@ -737,7 +739,7 @@ const DataTool = () => {
     );
   };
 
-  // Function to render demographic stacked bars
+  // Function to render demographic stacked bars (smaller size version)
   const renderDemographicBar = (data: DemographicBarData) => {
     if (!data || !data.data || data.data.length === 0) return null;
     
@@ -754,11 +756,11 @@ const DataTool = () => {
     });
     
     return (
-      <div className="mb-12">
-        <h3 className="text-lg font-bold mb-2">{data.name}</h3>
+      <div className="mb-8">
+        <h3 className="text-sm font-bold mb-1">{data.name}</h3>
         
-        {/* Stacked percentage bar */}
-        <div className="relative h-10 bg-gray-200 rounded-sm overflow-hidden mb-2">
+        {/* Stacked percentage bar - reduced height */}
+        <div className="relative h-6 bg-gray-200 rounded-sm overflow-hidden mb-1">
           {segmentsWithPosition.map((segment, index) => (
             <div
               key={index}
@@ -772,7 +774,7 @@ const DataTool = () => {
           ))}
         </div>
         
-        {/* Markers and percentages */}
+        {/* Markers and percentages - smaller text and size */}
         <div className="relative h-6">
           {segmentsWithPosition.map((segment, index) => (
             <div
@@ -783,10 +785,10 @@ const DataTool = () => {
                 transform: 'translateX(-50%)'
               }}
             >
-              <span className="text-xl font-bold">+</span>
+              <span className="text-sm font-bold">+</span>
               <div className="text-center">
-                <div className="font-bold">{segment.percentage}%</div>
-                <div className="text-sm">{segment.name}</div>
+                <div className="text-xs font-bold">{segment.percentage}%</div>
+                <div className="text-xs">{segment.name}</div>
               </div>
             </div>
           ))}
