@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import Layout from '../components/Layout';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
-import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, Tooltip, Cell } from 'recharts';
+import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, Tooltip, Cell, PieChart, Pie, ResponsiveContainer, Legend } from 'recharts';
 import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronUp, Plus, Minus, ChevronLeft, ChevronRight, FileText, Download } from 'lucide-react';
 
@@ -34,6 +34,12 @@ interface Complaint {
   attachments: number;
   final_finding: string | null;
   final_outcome: string | null;
+}
+
+interface OutcomeData {
+  name: string;
+  value: number;
+  color: string;
 }
 
 // New Orleans coordinates
@@ -103,6 +109,69 @@ const DataTool = () => {
     }
     return `rgba(65, 105, 225, ${Math.min(z * 0.5, 1)})`; // Blue for use of force
   };
+
+  // Fetch allegation outcomes for the pie chart
+  const { data: outcomeData, isLoading: isLoadingOutcomes } = useQuery({
+    queryKey: ['allegation-outcomes'],
+    queryFn: async () => {
+      const { data: allegations, error } = await supabase
+        .from('Police_Data_Allegations')
+        .select('*');
+
+      if (error) throw new Error('Failed to fetch allegation data');
+
+      // Count total allegations
+      const totalAllegations = allegations?.length || 0;
+
+      // Count findings
+      const findingCounts: Record<string, number> = {};
+      
+      allegations?.forEach(allegation => {
+        const finding = allegation.finding || 'Unknown';
+        findingCounts[finding] = (findingCounts[finding] || 0) + 1;
+      });
+
+      // Generate pie chart data
+      const findingsData: OutcomeData[] = [
+        {
+          name: 'Allegations',
+          value: totalAllegations,
+          color: '#0EA5E9' // Ocean Blue
+        }
+      ];
+
+      // Chart colors
+      const colors = [
+        '#0FA0CE', // Bright Blue
+        '#F97316', // Bright Orange
+        '#D946EF', // Magenta Pink
+        '#8B5CF6', // Vivid Purple
+        '#FEC6A1', // Soft Orange
+        '#E5DEFF', // Soft Purple
+        '#FFDEE2', // Soft Pink
+        '#FDE1D3', // Soft Peach
+        '#D3E4FD', // Soft Blue
+      ];
+
+      // Add findings to data
+      let colorIndex = 0;
+      Object.entries(findingCounts)
+        .sort((a, b) => b[1] - a[1]) // Sort by count (highest first)
+        .forEach(([finding, count]) => {
+          findingsData.push({
+            name: finding,
+            value: count,
+            color: colors[colorIndex % colors.length]
+          });
+          colorIndex++;
+        });
+
+      return {
+        findings: findingsData,
+        totalAllegations
+      };
+    }
+  });
 
   // Fetch officers with complaint counts
   const { data: officers, isLoading: isLoadingOfficers } = useQuery({
@@ -192,6 +261,23 @@ const DataTool = () => {
       setExpandedComplaint(complaintId);
     }
   };
+
+  // Calculate percentage of unsustained allegations
+  const calculatePercentage = () => {
+    if (!outcomeData) return null;
+    
+    const unsustained = outcomeData.findings.find(item => item.name === 'Not Sustained');
+    
+    if (!unsustained) return null;
+    
+    const percentage = ((unsustained.value / outcomeData.totalAllegations) * 100).toFixed(2);
+    return {
+      percentage,
+      finding: 'Not Sustained'
+    };
+  };
+
+  const percentageInfo = calculatePercentage();
 
   return (
     <Layout>
@@ -306,8 +392,81 @@ const DataTool = () => {
                   </button>
                 </div>
               </div>
-              <div className="h-[300px] flex items-center justify-center">
-                <p className="text-portal-500">Graph Data Coming Soon</p>
+              
+              <div className="h-[380px] w-full">
+                {activeTab === 'outcomes' ? (
+                  isLoadingOutcomes ? (
+                    <div className="h-full flex items-center justify-center">
+                      <p className="text-portal-500">Loading outcomes data...</p>
+                    </div>
+                  ) : outcomeData ? (
+                    <div className="h-full">
+                      <div className="mb-2">
+                        <h3 className="text-xl font-bold text-portal-900">
+                          {outcomeData.totalAllegations.toLocaleString()} Allegations
+                        </h3>
+                        <div className="h-px w-36 bg-portal-300 my-2" />
+                      </div>
+                      
+                      <div className="mb-6">
+                        <h4 className="text-lg text-portal-900">{outcomeData.totalAllegations.toLocaleString()} Allegations</h4>
+                        {percentageInfo && (
+                          <p className="text-portal-700">
+                            {percentageInfo.percentage}% of "Allegations" complaints were found "{percentageInfo.finding}"
+                          </p>
+                        )}
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 h-[260px]">
+                        <div className="flex flex-col justify-center space-y-2">
+                          {outcomeData.findings.slice(0, 6).map((item, index) => (
+                            <div key={index} className="flex items-center space-x-3">
+                              <span className="h-4 w-4 rounded-full" style={{ backgroundColor: item.color }}></span>
+                              <span className="font-bold">{item.value.toLocaleString()}</span>
+                              <span className="text-portal-700">{item.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        <div className="relative h-full">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={[outcomeData.findings[0]]}
+                                dataKey="value"
+                                cx="50%"
+                                cy="50%"
+                                outerRadius={100}
+                                fill={outcomeData.findings[0].color}
+                              />
+                              <Pie
+                                data={outcomeData.findings.slice(1)}
+                                dataKey="value"
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={60}
+                                outerRadius={90}
+                                paddingAngle={2}
+                              >
+                                {outcomeData.findings.slice(1).map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.color} />
+                                ))}
+                              </Pie>
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="h-full flex items-center justify-center">
+                      <p className="text-portal-500">No outcomes data available</p>
+                    </div>
+                  )
+                ) : (
+                  <div className="h-full flex items-center justify-center">
+                    <p className="text-portal-500">Graph Data Coming Soon</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
