@@ -1,12 +1,9 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Search } from 'lucide-react';
 
-interface LayoutProps {
-  children: React.ReactNode;
-}
-
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen bg-portal-50">
       <nav className="glass-panel fixed top-0 w-full z-50 px-6 py-4">
