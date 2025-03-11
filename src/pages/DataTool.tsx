@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Layout from '../components/Layout';
 import { useQuery } from '@tanstack/react-query';
@@ -72,12 +71,12 @@ interface AllegationData {
   color: string;
 }
 
-// New Orleans coordinates
 const NEW_ORLEANS_LAT = 29.9511;
 const NEW_ORLEANS_LNG = -90.0715;
-const COORDINATE_SPREAD = 0.1; // Spread incidents within ~11km radius
+const COORDINATE_SPREAD = 0.1;
 
 const DataTool = () => {
+  const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('outcomes');
   const [year, setYear] = useState(new Date().getFullYear().toString());
   const [selectedOfficer, setSelectedOfficer] = useState<number | null>(null);
@@ -86,7 +85,6 @@ const DataTool = () => {
   const { data: heatmapData, isLoading } = useQuery({
     queryKey: ['incidents-heatmap'],
     queryFn: async () => {
-      // Fetch complaints and use of force data
       const { data: complaints, error: complaintsError } = await supabase
         .from('Police_Data_Complaints')
         .select('*');
@@ -99,30 +97,27 @@ const DataTool = () => {
 
       const transformedData: IncidentData[] = [];
       
-      // Process complaints
       complaints?.forEach((complaint, index) => {
-        // Generate random coordinates around New Orleans
         const lat = NEW_ORLEANS_LAT + (Math.random() - 0.5) * COORDINATE_SPREAD;
         const lng = NEW_ORLEANS_LNG + (Math.random() - 0.5) * COORDINATE_SPREAD;
         
         transformedData.push({
-          x: lng, // longitude
-          y: lat, // latitude
-          z: 1, // intensity
+          x: lng,
+          y: lat,
+          z: 1,
           type: 'complaint',
           details: `Complaint: ${complaint.complaint_type}`
         });
       });
 
-      // Process use of force incidents
       useOfForce?.forEach((incident, index) => {
         const lat = NEW_ORLEANS_LAT + (Math.random() - 0.5) * COORDINATE_SPREAD;
         const lng = NEW_ORLEANS_LNG + (Math.random() - 0.5) * COORDINATE_SPREAD;
 
         transformedData.push({
-          x: lng, // longitude
-          y: lat, // latitude
-          z: 2, // higher intensity for use of force
+          x: lng,
+          y: lat,
+          z: 2,
           type: 'force',
           details: `Force Type: ${incident.force_type}`
         });
@@ -132,15 +127,6 @@ const DataTool = () => {
     }
   });
 
-  // Function to determine point color based on type and intensity
-  const getPointColor = (type: string, z: number) => {
-    if (type === 'complaint') {
-      return `rgba(255, 99, 71, ${Math.min(z * 0.5, 1)})`; // Red for complaints
-    }
-    return `rgba(65, 105, 225, ${Math.min(z * 0.5, 1)})`; // Blue for use of force
-  };
-
-  // Fetch allegation outcomes for the pie chart
   const { data: outcomeData, isLoading: isLoadingOutcomes } = useQuery({
     queryKey: ['allegation-outcomes'],
     queryFn: async () => {
@@ -150,10 +136,8 @@ const DataTool = () => {
 
       if (error) throw new Error('Failed to fetch allegation data');
 
-      // Count total allegations
       const totalAllegations = allegations?.length || 0;
 
-      // Count findings
       const findingCounts: Record<string, number> = {};
       
       allegations?.forEach(allegation => {
@@ -161,32 +145,29 @@ const DataTool = () => {
         findingCounts[finding] = (findingCounts[finding] || 0) + 1;
       });
 
-      // Generate pie chart data
       const findingsData: OutcomeData[] = [
         {
           name: 'Allegations',
           value: totalAllegations,
-          color: '#0EA5E9' // Ocean Blue
+          color: '#0EA5E9'
         }
       ];
 
-      // Chart colors
       const colors = [
-        '#0FA0CE', // Bright Blue
-        '#F97316', // Bright Orange
-        '#D946EF', // Magenta Pink
-        '#8B5CF6', // Vivid Purple
-        '#FEC6A1', // Soft Orange
-        '#E5DEFF', // Soft Purple
-        '#FFDEE2', // Soft Pink
-        '#FDE1D3', // Soft Peach
-        '#D3E4FD', // Soft Blue
+        '#0FA0CE',
+        '#F97316',
+        '#D946EF',
+        '#8B5CF6',
+        '#FEC6A1',
+        '#E5DEFF',
+        '#FFDEE2',
+        '#FDE1D3',
+        '#D3E4FD'
       ];
 
-      // Add findings to data
       let colorIndex = 0;
       Object.entries(findingCounts)
-        .sort((a, b) => b[1] - a[1]) // Sort by count (highest first)
+        .sort((a, b) => b[1] - a[1])
         .forEach(([finding, count]) => {
           findingsData.push({
             name: finding,
@@ -203,7 +184,6 @@ const DataTool = () => {
     }
   });
 
-  // Fetch allegation categories for the bar chart
   const { data: categoryData, isLoading: isLoadingCategories } = useQuery({
     queryKey: ['allegation-categories'],
     queryFn: async () => {
@@ -213,7 +193,6 @@ const DataTool = () => {
 
       if (error) throw new Error('Failed to fetch allegation category data');
 
-      // Group by category and count
       const categoryCounts: Record<string, { total: number, disciplined: number }> = {};
       
       allegations?.forEach(allegation => {
@@ -225,7 +204,6 @@ const DataTool = () => {
         
         categoryCounts[category].total += 1;
         
-        // Count as disciplined if outcome contains certain keywords
         const isDisciplined = allegation.outcome?.toLowerCase().includes('discipline') || 
                               allegation.outcome?.toLowerCase().includes('suspend') ||
                               allegation.outcome?.toLowerCase().includes('terminate');
@@ -235,10 +213,8 @@ const DataTool = () => {
         }
       });
 
-      // Generate chart data sorted by total count
       const chartData: CategoryData[] = Object.entries(categoryCounts)
         .map(([name, { total, disciplined }]) => {
-          // Calculate discipline percentage
           const percentage = total > 0 ? Math.round((disciplined / total) * 100) : 0;
           
           return {
@@ -246,11 +222,11 @@ const DataTool = () => {
             complaints: total,
             disciplined,
             disciplinePercentage: `${percentage}%`,
-            color: '#A4B8D1' // Default bar color
+            color: '#A4B8D1'
           };
         })
         .sort((a, b) => b.complaints - a.complaints)
-        .slice(0, 15); // Take top 15 categories
+        .slice(0, 15);
 
       return {
         categories: chartData,
@@ -259,18 +235,15 @@ const DataTool = () => {
     }
   });
 
-  // Fetch accused demographic data
   const { data: accusedData, isLoading: isLoadingAccused } = useQuery({
     queryKey: ['accused-demographics'],
     queryFn: async () => {
-      // Get all officers
       const { data: officers, error: officersError } = await supabase
         .from('Police_Data_Officers')
         .select('*');
 
       if (officersError) throw new Error('Failed to fetch officers data');
 
-      // Get officer allegations/complaints
       const { data: officerAllegations, error: allegationsError } = await supabase
         .from('Police_Data_Officer_Allegation_Link')
         .select('officer_id');
@@ -283,30 +256,25 @@ const DataTool = () => {
 
       if (complaintsError) throw new Error('Failed to fetch officer complaints');
 
-      // Combine all officer IDs from allegations and complaints (unique)
       const accusedOfficerIds = new Set([
         ...officerAllegations.map(a => a.officer_id),
         ...officerComplaints.map(c => c.officer_id)
       ].filter(id => id !== null));
       
-      // Filter to only get officers who have allegations/complaints
       const accusedOfficers = officers.filter(o => accusedOfficerIds.has(o.officer_id));
       
-      // Process race demographics
       const raceCounts: Record<string, number> = {};
       accusedOfficers.forEach(officer => {
         const race = officer.race || 'Unknown';
         raceCounts[race] = (raceCounts[race] || 0) + 1;
       });
       
-      // Process gender demographics
       const genderCounts: Record<string, number> = {};
       accusedOfficers.forEach(officer => {
         const gender = officer.gender || 'Unknown';
         genderCounts[gender] = (genderCounts[gender] || 0) + 1;
       });
       
-      // Calculate approximate age groups based on birth date (if available)
       const ageCounts: Record<string, number> = {
         '20-30': 0,
         '31-40': 0,
@@ -337,19 +305,16 @@ const DataTool = () => {
         else ageCounts['61+']++;
       });
       
-      // Format the data for the charts
       const totalOfficers = accusedOfficers.length;
       
-      // Colors for the stacked bars
       const colors = [
-        '#1E40AF', // Deep Blue
-        '#3B82F6', // Medium Blue
-        '#93C5FD', // Light Blue
-        '#BFDBFE', // Pale Blue
-        '#2563EB', // Royal Blue
+        '#1E40AF',
+        '#3B82F6',
+        '#93C5FD',
+        '#BFDBFE',
+        '#2563EB',
       ];
       
-      // Generate race data
       const raceData: DemographicData[] = Object.entries(raceCounts)
         .map(([race, count], index) => ({
           name: race,
@@ -359,7 +324,6 @@ const DataTool = () => {
         }))
         .sort((a, b) => b.value - a.value);
       
-      // Generate gender data
       const genderData: DemographicData[] = Object.entries(genderCounts)
         .map(([gender, count], index) => ({
           name: gender,
@@ -369,7 +333,6 @@ const DataTool = () => {
         }))
         .sort((a, b) => b.value - a.value);
       
-      // Generate age data
       const ageData: DemographicData[] = Object.entries(ageCounts)
         .filter(([age, count]) => age !== 'Unknown' && count > 0)
         .map(([age, count], index) => ({
@@ -379,7 +342,6 @@ const DataTool = () => {
           color: colors[index % colors.length]
         }))
         .sort((a, b) => {
-          // Special sort for age ranges
           const ageOrder = ['20-30', '31-40', '41-50', '51-60', '61+'];
           return ageOrder.indexOf(a.name) - ageOrder.indexOf(b.name);
         });
@@ -393,39 +355,33 @@ const DataTool = () => {
     }
   });
 
-  // Fetch complainant demographic data
   const { data: complainantData, isLoading: isLoadingComplainants } = useQuery({
     queryKey: ['complainant-demographics'],
     queryFn: async () => {
-      // Get all complainants
       const { data: complainants, error: complainantsError } = await supabase
         .from('Police_Data_Complainants')
         .select('*');
 
       if (complainantsError) throw new Error('Failed to fetch complainants data');
 
-      // Get complainant links to complaints
       const { data: complainantLinks, error: linksError } = await supabase
         .from('Police_Data_Complaint_Complainant_Link')
         .select('complainant_id, complaint_id');
 
       if (linksError) throw new Error('Failed to fetch complainant links');
 
-      // Process race demographics
       const raceCounts: Record<string, number> = {};
       complainants.forEach(complainant => {
         const race = complainant.race || 'Unknown';
         raceCounts[race] = (raceCounts[race] || 0) + 1;
       });
       
-      // Process gender demographics
       const genderCounts: Record<string, number> = {};
       complainants.forEach(complainant => {
         const gender = complainant.gender || 'Unknown';
         genderCounts[gender] = (genderCounts[gender] || 0) + 1;
       });
       
-      // Process age groups
       const ageCounts: Record<string, number> = {
         '21-30': 0,
         '31-40': 0,
@@ -448,22 +404,19 @@ const DataTool = () => {
         else ageCounts['51+']++;
       });
       
-      // Format the data for the charts
-      const totalComplainants = complainants.length || 1; // Avoid division by zero
+      const totalComplainants = complainants.length || 1;
       
-      // Colors for the stacked bars
       const colors = [
-        '#1E40AF', // Deep Blue
-        '#3B82F6', // Medium Blue
-        '#93C5FD', // Light Blue
-        '#BFDBFE', // Pale Blue
-        '#2563EB', // Royal Blue
-        '#DBEAFE', // Very Light Blue
-        '#EFF6FF', // Pale Blue
-        '#F1F5F9', // Gray Blue
+        '#1E40AF',
+        '#3B82F6',
+        '#93C5FD',
+        '#BFDBFE',
+        '#2563EB',
+        '#DBEAFE',
+        '#EFF6FF',
+        '#F1F5F9',
       ];
       
-      // Generate race data from actual database counts
       const raceData: DemographicData[] = Object.entries(raceCounts)
         .filter(([race, count]) => count > 0)
         .map(([race, count], index) => ({
@@ -474,7 +427,6 @@ const DataTool = () => {
         }))
         .sort((a, b) => b.value - a.value);
       
-      // Generate gender data from actual database counts
       const genderData: DemographicData[] = Object.entries(genderCounts)
         .filter(([gender, count]) => count > 0)
         .map(([gender, count], index) => ({
@@ -485,7 +437,6 @@ const DataTool = () => {
         }))
         .sort((a, b) => b.value - a.value);
       
-      // Generate age data from actual database counts
       const ageData: DemographicData[] = Object.entries(ageCounts)
         .filter(([age, count]) => age !== 'Unknown' && count > 0)
         .map(([age, count], index) => ({
@@ -495,7 +446,6 @@ const DataTool = () => {
           color: colors[index % colors.length]
         }))
         .sort((a, b) => {
-          // Special sort for age ranges
           const ageOrder = ['21-30', '31-40', '41-50', '51+'];
           return ageOrder.indexOf(a.name) - ageOrder.indexOf(b.name);
         });
@@ -509,28 +459,23 @@ const DataTool = () => {
     }
   });
 
-  // Fetch officer vs civilian allegations data
   const { data: officerCivilianData, isLoading: isLoadingOfficerCivilian } = useQuery({
     queryKey: ['officer-civilian-allegations'],
     queryFn: async () => {
-      // First get all allegations
       const { data: allegations, error: allegationsError } = await supabase
         .from('Police_Data_Allegations')
         .select('*');
 
       if (allegationsError) throw new Error('Failed to fetch allegations');
 
-      // Get officer allegations (allegations that are linked to officers)
       const { data: officerAllegations, error: officerAllegationsError } = await supabase
         .from('Police_Data_Officer_Allegation_Link')
         .select('allegation_id');
 
       if (officerAllegationsError) throw new Error('Failed to fetch officer allegations links');
 
-      // Create set of officer allegation IDs for fast lookup
       const officerAllegationIds = new Set(officerAllegations.map(link => link.allegation_id));
       
-      // Categorize allegations as officer or civilian
       let totalOfficerAllegations = 0;
       let officerSustained = 0;
       let officerUnsustained = 0;
@@ -547,7 +492,6 @@ const DataTool = () => {
         if (isOfficerAllegation) {
           totalOfficerAllegations++;
           
-          // Check if sustained (using the finding field)
           const isSustained = allegation.finding?.toLowerCase().includes('sustained');
           if (isSustained) {
             officerSustained++;
@@ -555,10 +499,8 @@ const DataTool = () => {
             officerUnsustained++;
           }
         } else if (allegation.allegation_id) {
-          // If it has an ID but is not linked to an officer, it's a civilian allegation
           totalCivilianAllegations++;
           
-          // Check if sustained
           const isSustained = allegation.finding?.toLowerCase().includes('sustained');
           if (isSustained) {
             civilianSustained++;
@@ -566,34 +508,31 @@ const DataTool = () => {
             civilianUnsustained++;
           }
         } else {
-          // For allegations without a clear ID or association
           unknownAllegations++;
         }
       });
 
-      // Format data for pie charts
       const officerAllegationsData: AllegationData[] = [
-        { name: 'Unsustained', value: officerUnsustained, color: '#FFE2E0' }, // Light pink
-        { name: 'Sustained', value: officerSustained, color: '#FF6B6B' }      // Bright red
+        { name: 'Unsustained', value: officerUnsustained, color: '#FFE2E0' },
+        { name: 'Sustained', value: officerSustained, color: '#FF6B6B' }
       ];
       
       const civilianAllegationsData: AllegationData[] = [
-        { name: 'Unsustained', value: civilianUnsustained, color: '#FFE2E0' }, // Light pink
-        { name: 'Sustained', value: civilianSustained, color: '#FF6B6B' }      // Bright red
+        { name: 'Unsustained', value: civilianUnsustained, color: '#FFE2E0' },
+        { name: 'Sustained', value: civilianSustained, color: '#FF6B6B' }
       ];
       
-      // Format data for horizontal bar chart
       const barChartData = [
         { 
           name: 'Unknown', 
           value: unknownAllegations, 
-          color: '#E0E0E0',  // Light gray
-          fill: '#E0E0E0' 
+          color: '#E0E0E0',
+          fill: '#E0E0E0'
         },
         { 
           name: 'Civilian Allegations', 
           value: totalCivilianAllegations, 
-          color: '#F0F0F0',  // Very light gray
+          color: '#F0F0F0',
           fill: '#F0F0F0'
         }
       ];
@@ -617,18 +556,15 @@ const DataTool = () => {
     }
   });
 
-  // Fetch officers with complaint counts
   const { data: officers, isLoading: isLoadingOfficers } = useQuery({
     queryKey: ['officers-with-complaints'],
     queryFn: async () => {
-      // First get all officers
       const { data: officersData, error: officersError } = await supabase
         .from('Police_Data_Officers')
         .select('*');
 
       if (officersError) throw new Error('Failed to fetch officers');
 
-      // For each officer, count their complaints
       const officersWithComplaints = await Promise.all(
         officersData.map(async (officer) => {
           const { count, error } = await supabase
@@ -643,12 +579,10 @@ const DataTool = () => {
         })
       );
 
-      // Sort by complaint count (highest first)
       return officersWithComplaints.sort((a, b) => b.complaint_count - a.complaint_count);
     }
   });
 
-  // Fetch complaints for a specific officer
   const { data: complaints, isLoading: isLoadingComplaints } = useQuery({
     queryKey: ['officer-complaints', selectedOfficer],
     queryFn: async () => {
@@ -671,7 +605,6 @@ const DataTool = () => {
 
       if (linksError) throw new Error('Failed to fetch complaints');
 
-      // Format complaints for display
       return complaintLinks.map(link => ({
         complaint_id: link.complaint.complaint_id,
         category: link.complaint.complaint_type || 'Unknown',
@@ -679,7 +612,7 @@ const DataTool = () => {
         incident_date: link.complaint.incident_date || 'Unknown date',
         officer_name: officers?.find(o => o.officer_id === selectedOfficer)?.first_name + ' ' + 
                     officers?.find(o => o.officer_id === selectedOfficer)?.last_name,
-        attachments: 0, // Placeholder, would need another query to get actual count
+        attachments: 0,
         final_finding: link.complaint.final_finding,
         final_outcome: link.complaint.final_outcome,
         role_in_incident: link.role_in_incident
@@ -706,7 +639,6 @@ const DataTool = () => {
     }
   };
 
-  // Calculate percentage of unsustained allegations
   const calculatePercentage = () => {
     if (!outcomeData) return null;
     
@@ -723,7 +655,6 @@ const DataTool = () => {
 
   const percentageInfo = calculatePercentage();
 
-  // Function to customize the category bar chart
   const renderCustomBarLabel = (props: any) => {
     const { x, y, width, height, value, index } = props;
     const data = categoryData?.categories[index];
@@ -739,11 +670,9 @@ const DataTool = () => {
     );
   };
 
-  // Function to render demographic stacked bars (smaller size version)
   const renderDemographicBar = (data: DemographicBarData) => {
     if (!data || !data.data || data.data.length === 0) return null;
     
-    // Calculate cumulative percentages for positioning the segments
     let cumulativePercentage = 0;
     const segmentsWithPosition = data.data.map(item => {
       const startPosition = cumulativePercentage;
@@ -759,7 +688,6 @@ const DataTool = () => {
       <div className="mb-8">
         <h3 className="text-sm font-bold mb-1">{data.name}</h3>
         
-        {/* Stacked percentage bar - reduced height */}
         <div className="relative h-6 bg-gray-200 rounded-sm overflow-hidden mb-1">
           {segmentsWithPosition.map((segment, index) => (
             <div
@@ -774,7 +702,6 @@ const DataTool = () => {
           ))}
         </div>
         
-        {/* Markers and percentages - smaller text and size */}
         <div className="relative h-6">
           {segmentsWithPosition.map((segment, index) => (
             <div
@@ -797,49 +724,184 @@ const DataTool = () => {
     );
   };
 
+  const { data: searchResults, isLoading: isSearching } = useQuery({
+    queryKey: ['global-search', searchQuery],
+    queryFn: async () => {
+      if (!searchQuery || searchQuery.length < 2) return null;
+
+      const { data: officers } = await supabase
+        .from('Police_Data_Officers')
+        .select('*')
+        .or(`first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,race.ilike.%${searchQuery}%`)
+        .limit(5);
+
+      const { data: complaints } = await supabase
+        .from('Police_Data_Complaints')
+        .select('*')
+        .or(`complaint_type.ilike.%${searchQuery}%,location.ilike.%${searchQuery}%`)
+        .limit(5);
+
+      const { data: complainants } = await supabase
+        .from('Police_Data_Complainants')
+        .select('*')
+        .or(`race.ilike.%${searchQuery}%,type.ilike.%${searchQuery}%`)
+        .limit(5);
+
+      return {
+        officers: officers?.map(officer => ({
+          type: 'Officer',
+          subtype: 'Name',
+          value: `${officer.first_name} ${officer.last_name}`,
+          id: officer.officer_id
+        })) || [],
+        officerRace: [...new Set(officers?.map(o => o.race))].filter(Boolean).map(race => ({
+          type: 'Officer',
+          subtype: 'Race',
+          value: race,
+        })),
+        complainantRace: [...new Set(complainants?.map(c => c.race))].filter(Boolean).map(race => ({
+          type: 'Complainant',
+          subtype: 'Race',
+          value: race,
+        })),
+        locations: [...new Set(complaints?.map(c => c.location))].filter(Boolean).map(location => ({
+          type: 'Location',
+          subtype: 'Area',
+          value: location,
+        })),
+        incidents: complaints?.map(complaint => {
+          const date = new Date(complaint.incident_date);
+          return {
+            type: 'Incident',
+            subtype: 'Summary',
+            value: `${complaint.complaint_type} (${date.toLocaleDateString()})`,
+            id: complaint.complaint_id
+          };
+        }) || []
+      };
+    },
+    enabled: searchQuery.length >= 2
+  });
+
   return (
     <Layout>
       <div className="container mx-auto px-6 py-8">
         <div className="glass-panel rounded-2xl p-8">
           <h1 className="text-3xl font-bold text-portal-900 mb-6">Data Analysis Tool</h1>
           
-          {/* Search Section */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div>
-              <label className="block text-sm font-medium text-portal-600 mb-2">Officer Name</label>
+          <div className="mb-8 relative">
+            <div className="max-w-3xl mx-auto">
               <input
                 type="text"
-                placeholder="Search by name"
-                className="w-full p-2 rounded-lg border border-portal-200 focus:border-portal-400 focus:ring-1 focus:ring-portal-400"
+                placeholder="Search by name, location, incident type..."
+                className="w-full p-3 rounded-lg border border-portal-200 focus:border-portal-400 focus:ring-1 focus:ring-portal-400"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-portal-600 mb-2">Year</label>
-              <select
-                value={year}
-                onChange={(e) => setYear(e.target.value)}
-                className="w-full p-2 rounded-lg border border-portal-200 focus:border-portal-400 focus:ring-1 focus:ring-portal-400"
-              >
-                {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map((year) => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-portal-600 mb-2">Incident Type</label>
-              <select
-                className="w-full p-2 rounded-lg border border-portal-200 focus:border-portal-400 focus:ring-1 focus:ring-portal-400"
-              >
-                <option value="all">All Incidents</option>
-                <option value="complaints">Complaints Only</option>
-                <option value="force">Use of Force Only</option>
-              </select>
+              
+              {searchQuery.length >= 2 && (
+                <div className="absolute w-full mt-1 bg-white rounded-lg shadow-lg border border-portal-200 max-h-96 overflow-y-auto z-50">
+                  {isSearching ? (
+                    <div className="p-4 text-center text-portal-500">
+                      Searching...
+                    </div>
+                  ) : searchResults ? (
+                    <div className="p-2">
+                      {searchResults.officers.length > 0 && (
+                        <div className="mb-3">
+                          <div className="px-3 py-1 text-sm font-semibold text-portal-600 bg-portal-50">
+                            Officers
+                          </div>
+                          {searchResults.officers.map((result, idx) => (
+                            <div 
+                              key={`officer-${idx}`}
+                              className="px-3 py-2 hover:bg-portal-50 cursor-pointer text-sm"
+                              onClick={() => {
+                                setSelectedOfficer(result.id);
+                                setSearchQuery('');
+                              }}
+                            >
+                              {result.value}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {searchResults.officerRace.length > 0 && (
+                        <div className="mb-3">
+                          <div className="px-3 py-1 text-sm font-semibold text-portal-600 bg-portal-50">
+                            Officer Race
+                          </div>
+                          {searchResults.officerRace.map((result, idx) => (
+                            <div 
+                              key={`race-${idx}`}
+                              className="px-3 py-2 hover:bg-portal-50 cursor-pointer text-sm"
+                            >
+                              {result.value}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {searchResults.complainantRace.length > 0 && (
+                        <div className="mb-3">
+                          <div className="px-3 py-1 text-sm font-semibold text-portal-600 bg-portal-50">
+                            Complainant Race
+                          </div>
+                          {searchResults.complainantRace.map((result, idx) => (
+                            <div 
+                              key={`comp-race-${idx}`}
+                              className="px-3 py-2 hover:bg-portal-50 cursor-pointer text-sm"
+                            >
+                              {result.value}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {searchResults.locations.length > 0 && (
+                        <div className="mb-3">
+                          <div className="px-3 py-1 text-sm font-semibold text-portal-600 bg-portal-50">
+                            Areas
+                          </div>
+                          {searchResults.locations.map((result, idx) => (
+                            <div 
+                              key={`location-${idx}`}
+                              className="px-3 py-2 hover:bg-portal-50 cursor-pointer text-sm"
+                            >
+                              {result.value}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {searchResults.incidents.length > 0 && (
+                        <div className="mb-3">
+                          <div className="px-3 py-1 text-sm font-semibold text-portal-600 bg-portal-50">
+                            Incidents
+                          </div>
+                          {searchResults.incidents.map((result, idx) => (
+                            <div 
+                              key={`incident-${idx}`}
+                              className="px-3 py-2 hover:bg-portal-50 cursor-pointer text-sm"
+                            >
+                              {result.value}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="p-4 text-center text-portal-500">
+                      No results found
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Map and Graphs Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            {/* Mapbox Heat Map */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <h3 className="text-lg font-semibold text-portal-900 mb-4">Incident Distribution Heat Map</h3>
               <div className="h-[400px] w-full">
@@ -854,7 +916,6 @@ const DataTool = () => {
               </div>
             </div>
 
-            {/* Graphs Section */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <div className="border-b border-portal-200 pb-4">
                 <div className="flex space-x-4 overflow-x-auto">
@@ -1023,7 +1084,6 @@ const DataTool = () => {
                               barSize={25}
                               shape={renderCustomBarLabel}
                             >
-                              {/* Using LabelList for detailed annotations instead of Cell */}
                               <LabelList 
                                 dataKey="complaints" 
                                 position="insideLeft"
@@ -1037,7 +1097,6 @@ const DataTool = () => {
                         </ResponsiveContainer>
                       </div>
                       
-                      {/* Overlay for text that doesn't bunch up */}
                       <div className="relative">
                         <div className="absolute top-[-380px] left-0 right-16 bottom-0 pointer-events-none">
                           {categoryData.categories.map((category, index) => (
@@ -1059,7 +1118,6 @@ const DataTool = () => {
                         </div>
                       </div>
                       
-                      {/* Legend */}
                       <div className="flex items-center justify-start mt-4 space-x-8">
                         <div className="flex items-center">
                           <div className="w-4 h-4 bg-[#002E5D] mr-2"></div>
@@ -1099,9 +1157,7 @@ const DataTool = () => {
                     </div>
                   ) : officerCivilianData ? (
                     <div className="h-full">
-                      {/* Two pie charts side by side */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 border-b pb-6">
-                        {/* Civilian Allegations */}
                         <div className="text-center">
                           <h3 className="text-lg font-medium text-gray-700 mb-2">Civilian Allegations</h3>
                           <div className="h-[180px]">
@@ -1136,7 +1192,6 @@ const DataTool = () => {
                           </div>
                         </div>
 
-                        {/* Officer Allegations */}
                         <div className="text-center">
                           <h3 className="text-lg font-medium text-gray-700 mb-2">Officer Allegations</h3>
                           <div className="h-[180px]">
@@ -1172,7 +1227,6 @@ const DataTool = () => {
                         </div>
                       </div>
 
-                      {/* Horizontal bar chart */}
                       <div className="mt-6">
                         <div className="h-[80px]">
                           <ResponsiveContainer width="100%" height="100%">
@@ -1188,7 +1242,6 @@ const DataTool = () => {
                           </ResponsiveContainer>
                         </div>
                         
-                        {/* Values below the bar chart */}
                         <div className="flex mt-2">
                           <div className="flex-1">
                             <div className="font-bold">{officerCivilianData.unknown}</div>
@@ -1231,7 +1284,6 @@ const DataTool = () => {
             </div>
           </div>
 
-          {/* Officers Section */}
           <div className="mt-12">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-portal-900">Officers ({officers?.length || 0})</h2>
@@ -1245,10 +1297,8 @@ const DataTool = () => {
               </div>
             </div>
 
-            {/* Color scale legend */}
             <div className="w-full h-2 bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 mb-6 rounded-full"></div>
 
-            {/* Officer Tiles */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
               {isLoadingOfficers ? (
                 <div className="col-span-full flex justify-center py-12">
@@ -1287,7 +1337,6 @@ const DataTool = () => {
               )}
             </div>
             
-            {/* Complaints Section - Only shown when an officer is selected */}
             {selectedOfficer && (
               <div className="mt-12 bg-white rounded-xl p-6 shadow-sm">
                 <div className="flex justify-between items-center mb-6">
