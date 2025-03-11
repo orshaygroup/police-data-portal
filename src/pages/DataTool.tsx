@@ -893,4 +893,17 @@ const DataTool = () => {
                     </div>
                   ) : (
                     <div className="p-4 text-center text-portal-500">
-                      No results found for
+                      No results found
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </Layout>
+  );
+};
+
+export default DataTool;
