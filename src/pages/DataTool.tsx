@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +8,8 @@ import {
   CartesianGrid, LabelList 
 } from 'recharts';
 import { Link } from 'react-router-dom';
-import { ChevronDown, ChevronUp, Plus, Minus, ChevronLeft, ChevronRight, FileText, Download } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus, Minus, ChevronLeft, ChevronRight, FileText, Download, X, Filter } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface IncidentData {
   x: number;
@@ -71,6 +72,13 @@ interface AllegationData {
   color: string;
 }
 
+interface Filter {
+  id: string;
+  type: string;
+  value: string;
+  label: string;
+}
+
 const NEW_ORLEANS_LAT = 29.9511;
 const NEW_ORLEANS_LNG = -90.0715;
 const COORDINATE_SPREAD = 0.1;
@@ -78,9 +86,9 @@ const COORDINATE_SPREAD = 0.1;
 const DataTool = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('outcomes');
-  const [year, setYear] = useState(new Date().getFullYear().toString());
   const [selectedOfficer, setSelectedOfficer] = useState<number | null>(null);
   const [expandedComplaint, setExpandedComplaint] = useState<number | null>(null);
+  const [activeFilters, setActiveFilters] = useState<Filter[]>([]);
 
   const { data: heatmapData, isLoading } = useQuery({
     queryKey: ['incidents-heatmap'],
@@ -621,14 +629,82 @@ const DataTool = () => {
     enabled: !!selectedOfficer
   });
 
-  const toggleOfficer = (officerId: number) => {
+  const addFilter = (type: string, value: string, label: string) => {
+    const filterExists = activeFilters.some(
+      filter => filter.type === type && filter.value === value
+    );
+    
+    if (!filterExists) {
+      const newFilter: Filter = {
+        id: `${type}-${value}-${Date.now()}`,
+        type,
+        value,
+        label
+      };
+      
+      setActiveFilters(prev => [...prev, newFilter]);
+      toast.success(`Added filter: ${label}`);
+    }
+  };
+
+  const removeFilter = (filterId: string) => {
+    setActiveFilters(prev => prev.filter(filter => filter.id !== filterId));
+  };
+
+  const clearAllFilters = () => {
+    setActiveFilters([]);
+    toast.info('All filters cleared');
+  };
+  
+  const applyFilters = (data: any[], filters: Filter[]) => {
+    if (filters.length === 0) return data;
+    
+    return data.filter(item => {
+      return filters.every(filter => {
+        switch (filter.type) {
+          case 'officerRace':
+            return item.race === filter.value;
+          case 'complainantRace':
+            return true;
+          case 'location':
+            return item.location === filter.value;
+          case 'category':
+            return item.category === filter.value;
+          case 'officer':
+            return item.officer_id === parseInt(filter.value);
+          default:
+            return true;
+        }
+      });
+    });
+  };
+
+  const toggleOfficer = (officerId: number, officerName: string) => {
     if (selectedOfficer === officerId) {
       setSelectedOfficer(null);
       setExpandedComplaint(null);
     } else {
       setSelectedOfficer(officerId);
       setExpandedComplaint(null);
+      addFilter('officer', officerId.toString(), `Officer: ${officerName}`);
     }
+  };
+
+  const handleDemographicSegmentClick = (segmentName: string, type: string) => {
+    let filterType = '';
+    if (type === 'Race') filterType = activeTab === 'accused' ? 'officerRace' : 'complainantRace';
+    if (type === 'Gender') filterType = activeTab === 'accused' ? 'officerGender' : 'complainantGender';
+    if (type === 'Age') filterType = activeTab === 'accused' ? 'officerAge' : 'complainantAge';
+    
+    addFilter(filterType, segmentName, `${type}: ${segmentName}`);
+  };
+  
+  const handleCategoryClick = (category: string) => {
+    addFilter('category', category, `Category: ${category}`);
+  };
+  
+  const handleLocationClick = (location: string) => {
+    addFilter('location', location, `Location: ${location}`);
   };
 
   const toggleComplaint = (complaintId: number) => {
@@ -688,16 +764,17 @@ const DataTool = () => {
       <div className="mb-8">
         <h3 className="text-sm font-bold mb-1">{data.name}</h3>
         
-        <div className="relative h-6 bg-gray-200 rounded-sm overflow-hidden mb-1">
+        <div className="relative h-5 bg-gray-200 rounded-sm overflow-hidden mb-1">
           {segmentsWithPosition.map((segment, index) => (
             <div
               key={index}
-              className="absolute top-0 h-full"
+              className="absolute top-0 h-full cursor-pointer hover:brightness-90 transition-all"
               style={{
                 left: `${segment.startPosition}%`,
                 width: `${segment.percentage}%`,
                 backgroundColor: segment.color,
               }}
+              onClick={() => handleDemographicSegmentClick(segment.name, data.name)}
             />
           ))}
         </div>
@@ -712,9 +789,8 @@ const DataTool = () => {
                 transform: 'translateX(-50%)'
               }}
             >
-              <span className="text-sm font-bold">+</span>
               <div className="text-center">
-                <div className="text-xs font-bold">{segment.percentage}%</div>
+                <div className="text-xs font-medium">{segment.percentage}%</div>
                 <div className="text-xs">{segment.name}</div>
               </div>
             </div>
@@ -724,72 +800,13 @@ const DataTool = () => {
     );
   };
 
-  const { data: searchResults, isLoading: isSearching } = useQuery({
-    queryKey: ['global-search', searchQuery],
-    queryFn: async () => {
-      if (!searchQuery || searchQuery.length < 2) return null;
-
-      const { data: officers } = await supabase
-        .from('Police_Data_Officers')
-        .select('*')
-        .or(`first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,race.ilike.%${searchQuery}%`)
-        .limit(5);
-
-      const { data: complaints } = await supabase
-        .from('Police_Data_Complaints')
-        .select('*')
-        .or(`complaint_type.ilike.%${searchQuery}%,location.ilike.%${searchQuery}%`)
-        .limit(5);
-
-      const { data: complainants } = await supabase
-        .from('Police_Data_Complainants')
-        .select('*')
-        .or(`race.ilike.%${searchQuery}%,type.ilike.%${searchQuery}%`)
-        .limit(5);
-
-      return {
-        officers: officers?.map(officer => ({
-          type: 'Officer',
-          subtype: 'Name',
-          value: `${officer.first_name} ${officer.last_name}`,
-          id: officer.officer_id
-        })) || [],
-        officerRace: [...new Set(officers?.map(o => o.race))].filter(Boolean).map(race => ({
-          type: 'Officer',
-          subtype: 'Race',
-          value: race,
-        })),
-        complainantRace: [...new Set(complainants?.map(c => c.race))].filter(Boolean).map(race => ({
-          type: 'Complainant',
-          subtype: 'Race',
-          value: race,
-        })),
-        locations: [...new Set(complaints?.map(c => c.location))].filter(Boolean).map(location => ({
-          type: 'Location',
-          subtype: 'Area',
-          value: location,
-        })),
-        incidents: complaints?.map(complaint => {
-          const date = new Date(complaint.incident_date);
-          return {
-            type: 'Incident',
-            subtype: 'Summary',
-            value: `${complaint.complaint_type} (${date.toLocaleDateString()})`,
-            id: complaint.complaint_id
-          };
-        }) || []
-      };
-    },
-    enabled: searchQuery.length >= 2
-  });
-
   return (
     <Layout>
       <div className="container mx-auto px-6 py-8">
         <div className="glass-panel rounded-2xl p-8">
           <h1 className="text-3xl font-bold text-portal-900 mb-6">Data Analysis Tool</h1>
           
-          <div className="mb-8 relative">
+          <div className="mb-2 relative">
             <div className="max-w-3xl mx-auto">
               <input
                 type="text"
@@ -827,658 +844,4 @@ const DataTool = () => {
                         </div>
                       )}
 
-                      {searchResults.officerRace.length > 0 && (
-                        <div className="mb-3">
-                          <div className="px-3 py-1 text-sm font-semibold text-portal-600 bg-portal-50">
-                            Officer Race
-                          </div>
-                          {searchResults.officerRace.map((result, idx) => (
-                            <div 
-                              key={`race-${idx}`}
-                              className="px-3 py-2 hover:bg-portal-50 cursor-pointer text-sm"
-                            >
-                              {result.value}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {searchResults.complainantRace.length > 0 && (
-                        <div className="mb-3">
-                          <div className="px-3 py-1 text-sm font-semibold text-portal-600 bg-portal-50">
-                            Complainant Race
-                          </div>
-                          {searchResults.complainantRace.map((result, idx) => (
-                            <div 
-                              key={`comp-race-${idx}`}
-                              className="px-3 py-2 hover:bg-portal-50 cursor-pointer text-sm"
-                            >
-                              {result.value}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {searchResults.locations.length > 0 && (
-                        <div className="mb-3">
-                          <div className="px-3 py-1 text-sm font-semibold text-portal-600 bg-portal-50">
-                            Areas
-                          </div>
-                          {searchResults.locations.map((result, idx) => (
-                            <div 
-                              key={`location-${idx}`}
-                              className="px-3 py-2 hover:bg-portal-50 cursor-pointer text-sm"
-                            >
-                              {result.value}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {searchResults.incidents.length > 0 && (
-                        <div className="mb-3">
-                          <div className="px-3 py-1 text-sm font-semibold text-portal-600 bg-portal-50">
-                            Incidents
-                          </div>
-                          {searchResults.incidents.map((result, idx) => (
-                            <div 
-                              key={`incident-${idx}`}
-                              className="px-3 py-2 hover:bg-portal-50 cursor-pointer text-sm"
-                            >
-                              {result.value}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="p-4 text-center text-portal-500">
-                      No results found
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-portal-900 mb-4">Incident Distribution Heat Map</h3>
-              <div className="h-[400px] w-full">
-                <iframe 
-                  width='100%' 
-                  height='400px' 
-                  src="https://api.mapbox.com/styles/v1/krystalklean/cm7l36unb009x01qpg2jabkuf.html?title=false&access_token=pk.eyJ1Ijoia3J5c3RhbGtsZWFuIiwiYSI6ImNtN2RtaWNhNzA0eXIycW9oNXF2ZGRvN3oifQ.UcFuoQmTxIPGo12Tz8Wq5w&zoomwheel=false#10.33/30.0247/-89.9019" 
-                  title="Police Complaints Heatmap" 
-                  style={{ border: 'none', borderRadius: '0.5rem' }}
-                  allowFullScreen
-                ></iframe>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <div className="border-b border-portal-200 pb-4">
-                <div className="flex space-x-4 overflow-x-auto">
-                  <button 
-                    className={`px-4 py-2 text-sm font-medium ${
-                      activeTab === 'outcomes' 
-                        ? 'text-portal-900 border-b-2 border-portal-900' 
-                        : 'text-portal-500 hover:text-portal-900'
-                    }`}
-                    onClick={() => setActiveTab('outcomes')}
-                  >
-                    Outcomes
-                  </button>
-                  <button 
-                    className={`px-4 py-2 text-sm font-medium ${
-                      activeTab === 'categories' 
-                        ? 'text-portal-900 border-b-2 border-portal-900' 
-                        : 'text-portal-500 hover:text-portal-900'
-                    }`}
-                    onClick={() => setActiveTab('categories')}
-                  >
-                    Categories
-                  </button>
-                  <button 
-                    className={`px-4 py-2 text-sm font-medium ${
-                      activeTab === 'accused' 
-                        ? 'text-portal-900 border-b-2 border-portal-900' 
-                        : 'text-portal-500 hover:text-portal-900'
-                    }`}
-                    onClick={() => setActiveTab('accused')}
-                  >
-                    Accused
-                  </button>
-                  <button 
-                    className={`px-4 py-2 text-sm font-medium ${
-                      activeTab === 'officer-civilian' 
-                        ? 'text-portal-900 border-b-2 border-portal-900' 
-                        : 'text-portal-500 hover:text-portal-900'
-                    }`}
-                    onClick={() => setActiveTab('officer-civilian')}
-                  >
-                    Officer/Civilian
-                  </button>
-                  <button 
-                    className={`px-4 py-2 text-sm font-medium ${
-                      activeTab === 'complainants' 
-                        ? 'text-portal-900 border-b-2 border-portal-900' 
-                        : 'text-portal-500 hover:text-portal-900'
-                    }`}
-                    onClick={() => setActiveTab('complainants')}
-                  >
-                    Complainants
-                  </button>
-                </div>
-              </div>
-              
-              <div className="h-[380px] w-full overflow-y-auto">
-                {activeTab === 'outcomes' ? (
-                  isLoadingOutcomes ? (
-                    <div className="h-full flex items-center justify-center">
-                      <p className="text-portal-500">Loading outcomes data...</p>
-                    </div>
-                  ) : outcomeData ? (
-                    <div className="h-full">
-                      <div className="mb-2">
-                        <h3 className="text-xl font-bold text-portal-900">
-                          {outcomeData.totalAllegations.toLocaleString()} Allegations
-                        </h3>
-                        <div className="h-px w-36 bg-portal-300 my-2" />
-                      </div>
-                      
-                      <div className="mb-6">
-                        <h4 className="text-lg text-portal-900">{outcomeData.totalAllegations.toLocaleString()} Allegations</h4>
-                        {percentageInfo && (
-                          <p className="text-portal-700">
-                            {percentageInfo.percentage}% of "Allegations" complaints were found "{percentageInfo.finding}"
-                          </p>
-                        )}
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 h-[260px]">
-                        <div className="flex flex-col justify-center space-y-2">
-                          {outcomeData.findings.slice(0, 6).map((item, index) => (
-                            <div key={index} className="flex items-center space-x-3">
-                              <span className="h-4 w-4 rounded-full" style={{ backgroundColor: item.color }}></span>
-                              <span className="font-bold">{item.value.toLocaleString()}</span>
-                              <span className="text-portal-700">{item.name}</span>
-                            </div>
-                          ))}
-                        </div>
-                        
-                        <div className="relative h-full">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                              <Pie
-                                data={[outcomeData.findings[0]]}
-                                dataKey="value"
-                                cx="50%"
-                                cy="50%"
-                                outerRadius={100}
-                                fill={outcomeData.findings[0].color}
-                              />
-                              <Pie
-                                data={outcomeData.findings.slice(1)}
-                                dataKey="value"
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={60}
-                                outerRadius={90}
-                                paddingAngle={2}
-                              >
-                                {outcomeData.findings.slice(1).map((entry, index) => (
-                                  <Cell key={`cell-${index}`} fill={entry.color} />
-                                ))}
-                              </Pie>
-                            </PieChart>
-                          </ResponsiveContainer>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="h-full flex items-center justify-center">
-                      <p className="text-portal-500">No outcomes data available</p>
-                    </div>
-                  )
-                ) : activeTab === 'categories' ? (
-                  isLoadingCategories ? (
-                    <div className="h-full flex items-center justify-center">
-                      <p className="text-portal-500">Loading categories data...</p>
-                    </div>
-                  ) : categoryData ? (
-                    <div className="h-full flex flex-col">
-                      <div className="flex-1 overflow-auto pr-4">
-                        <ResponsiveContainer width="100%" height={categoryData.categories.length * 45}>
-                          <BarChart
-                            data={categoryData.categories}
-                            layout="vertical"
-                            margin={{ top: 10, right: 120, left: 20, bottom: 10 }}
-                          >
-                            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                            <XAxis 
-                              type="number" 
-                              domain={[0, 'dataMax']} 
-                              axisLine={false}
-                              tickLine={false}
-                              tick={{ fontSize: 12 }}
-                            />
-                            <YAxis 
-                              type="category" 
-                              dataKey="name" 
-                              width={10}
-                              axisLine={false}
-                              tickLine={false}
-                              tick={false}
-                            />
-                            <Tooltip
-                              formatter={(value, name) => {
-                                if (name === 'complaints') return [value, 'Complaints'];
-                                return [value, 'Disciplined'];
-                              }}
-                              labelFormatter={(label) => `Category: ${label}`}
-                            />
-                            <Bar 
-                              dataKey="complaints" 
-                              fill="#A4B8D1" 
-                              barSize={25}
-                              shape={renderCustomBarLabel}
-                            >
-                              <LabelList 
-                                dataKey="complaints" 
-                                position="insideLeft"
-                                style={{ 
-                                  fill: 'transparent', 
-                                  fontSize: 0 
-                                }}
-                              />
-                            </Bar>
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                      
-                      <div className="relative">
-                        <div className="absolute top-[-380px] left-0 right-16 bottom-0 pointer-events-none">
-                          {categoryData.categories.map((category, index) => (
-                            <div 
-                              key={index} 
-                              className="absolute text-sm flex items-center justify-between"
-                              style={{ 
-                                top: `${index * 45 + 10}px`,
-                                width: '100%'
-                              }}
-                            >
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">{category.complaints.toLocaleString()}</span>
-                                <span className="text-gray-600">— {category.disciplinePercentage} Disciplined</span>
-                              </div>
-                              <span className="font-medium text-gray-700 text-right">{category.name}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-start mt-4 space-x-8">
-                        <div className="flex items-center">
-                          <div className="w-4 h-4 bg-[#002E5D] mr-2"></div>
-                          <span className="text-sm text-gray-700">Disciplined</span>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-4 h-4 bg-[#A4B8D1] mr-2"></div>
-                          <span className="text-sm text-gray-700">Complaints</span>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="h-full flex items-center justify-center">
-                      <p className="text-portal-500">No categories data available</p>
-                    </div>
-                  )
-                ) : activeTab === 'accused' ? (
-                  isLoadingAccused ? (
-                    <div className="h-full flex items-center justify-center">
-                      <p className="text-portal-500">Loading accused officer data...</p>
-                    </div>
-                  ) : accusedData ? (
-                    <div className="h-full pt-4 overflow-y-auto">
-                      {renderDemographicBar(accusedData.race)}
-                      {renderDemographicBar(accusedData.gender)}
-                      {renderDemographicBar(accusedData.age)}
-                    </div>
-                  ) : (
-                    <div className="h-full flex items-center justify-center">
-                      <p className="text-portal-500">No accused officer data available</p>
-                    </div>
-                  )
-                ) : activeTab === 'officer-civilian' ? (
-                  isLoadingOfficerCivilian ? (
-                    <div className="h-full flex items-center justify-center">
-                      <p className="text-portal-500">Loading officer/civilian data...</p>
-                    </div>
-                  ) : officerCivilianData ? (
-                    <div className="h-full">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 border-b pb-6">
-                        <div className="text-center">
-                          <h3 className="text-lg font-medium text-gray-700 mb-2">Civilian Allegations</h3>
-                          <div className="h-[180px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                              <PieChart>
-                                <Pie
-                                  data={officerCivilianData.civilianAllegations.data}
-                                  dataKey="value"
-                                  cx="50%"
-                                  cy="50%"
-                                  innerRadius={50}
-                                  outerRadius={70}
-                                >
-                                  {officerCivilianData.civilianAllegations.data.map((entry, index) => (
-                                    <Cell key={`cell-civilian-${index}`} fill={entry.color} />
-                                  ))}
-                                </Pie>
-                              </PieChart>
-                            </ResponsiveContainer>
-                          </div>
-                          <div className="flex flex-col mt-4 space-y-1">
-                            <div className="flex items-center space-x-2">
-                              <span className="h-3 w-3 rounded-full bg-[#FFE2E0]"></span>
-                              <span className="font-bold">{officerCivilianData.civilianAllegations.unsustained.toLocaleString()}</span>
-                              <span className="text-gray-600">Unsustained</span>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <span className="h-3 w-3 rounded-full bg-[#FF6B6B]"></span>
-                              <span className="font-bold">{officerCivilianData.civilianAllegations.sustained.toLocaleString()}</span>
-                              <span className="text-gray-600">Sustained</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="text-center">
-                          <h3 className="text-lg font-medium text-gray-700 mb-2">Officer Allegations</h3>
-                          <div className="h-[180px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                              <PieChart>
-                                <Pie
-                                  data={officerCivilianData.officerAllegations.data}
-                                  dataKey="value"
-                                  cx="50%"
-                                  cy="50%"
-                                  innerRadius={50}
-                                  outerRadius={70}
-                                >
-                                  {officerCivilianData.officerAllegations.data.map((entry, index) => (
-                                    <Cell key={`cell-officer-${index}`} fill={entry.color} />
-                                  ))}
-                                </Pie>
-                              </PieChart>
-                            </ResponsiveContainer>
-                          </div>
-                          <div className="flex flex-col mt-4 space-y-1">
-                            <div className="flex items-center space-x-2">
-                              <span className="h-3 w-3 rounded-full bg-[#FFE2E0]"></span>
-                              <span className="font-bold">{officerCivilianData.officerAllegations.unsustained.toLocaleString()}</span>
-                              <span className="text-gray-600">Unsustained</span>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <span className="h-3 w-3 rounded-full bg-[#FF6B6B]"></span>
-                              <span className="font-bold">{officerCivilianData.officerAllegations.sustained.toLocaleString()}</span>
-                              <span className="text-gray-600">Sustained</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mt-6">
-                        <div className="h-[80px]">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <BarChart
-                              layout="vertical"
-                              data={officerCivilianData.barChart}
-                              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                            >
-                              <XAxis type="number" hide />
-                              <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={120} />
-                              <Bar dataKey="value" fill="#F0F0F0" />
-                            </BarChart>
-                          </ResponsiveContainer>
-                        </div>
-                        
-                        <div className="flex mt-2">
-                          <div className="flex-1">
-                            <div className="font-bold">{officerCivilianData.unknown}</div>
-                            <div className="text-sm text-gray-600">Unknown</div>
-                          </div>
-                          <div className="flex-1">
-                            <div className="font-bold">{officerCivilianData.civilianAllegations.total.toLocaleString()}</div>
-                            <div className="text-sm text-gray-600">Civilian Allegations</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="h-full flex items-center justify-center">
-                      <p className="text-portal-500">No officer/civilian data available</p>
-                    </div>
-                  )
-                ) : activeTab === 'complainants' ? (
-                  isLoadingComplainants ? (
-                    <div className="h-full flex items-center justify-center">
-                      <p className="text-portal-500">Loading complainant data...</p>
-                    </div>
-                  ) : complainantData ? (
-                    <div className="h-full pt-4 overflow-y-auto">
-                      {renderDemographicBar(complainantData.race)}
-                      {renderDemographicBar(complainantData.gender)}
-                      {renderDemographicBar(complainantData.age)}
-                    </div>
-                  ) : (
-                    <div className="h-full flex items-center justify-center">
-                      <p className="text-portal-500">No complainant data available</p>
-                    </div>
-                  )
-                ) : (
-                  <div className="h-full flex items-center justify-center">
-                    <p className="text-portal-500">Graph Data Coming Soon</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-12">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-portal-900">Officers ({officers?.length || 0})</h2>
-              <div className="flex space-x-2">
-                <button className="p-2 rounded-full bg-portal-100 hover:bg-portal-200">
-                  <ChevronLeft size={20} />
-                </button>
-                <button className="p-2 rounded-full bg-portal-100 hover:bg-portal-200">
-                  <ChevronRight size={20} />
-                </button>
-              </div>
-            </div>
-
-            <div className="w-full h-2 bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 mb-6 rounded-full"></div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
-              {isLoadingOfficers ? (
-                <div className="col-span-full flex justify-center py-12">
-                  <p>Loading officers...</p>
-                </div>
-              ) : (
-                officers?.slice(0, 12).map((officer) => (
-                  <div key={officer.officer_id} className="border border-portal-200 rounded-lg bg-white overflow-hidden">
-                    <div className="p-4">
-                      <Link to={`/officers/${officer.officer_id}`} className="font-bold text-lg text-portal-900 hover:text-portal-700">
-                        {officer.first_name} {officer.last_name}
-                      </Link>
-                      <p className="text-sm text-portal-600 mb-3">
-                        {officer.gender}, {officer.race}
-                      </p>
-                      
-                      <div 
-                        className="flex justify-between items-center cursor-pointer hover:bg-portal-50 p-2 rounded"
-                        onClick={() => toggleOfficer(officer.officer_id)}
-                      >
-                        <div className="flex items-center">
-                          {selectedOfficer === officer.officer_id ? (
-                            <Minus size={16} className="mr-2 text-portal-600" />
-                          ) : (
-                            <Plus size={16} className="mr-2 text-portal-600" />
-                          )}
-                          <span className="text-sm font-medium">Complaints</span>
-                        </div>
-                        <span className="bg-portal-100 px-2 py-1 rounded-full text-xs font-medium">
-                          {officer.complaint_count}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-            
-            {selectedOfficer && (
-              <div className="mt-12 bg-white rounded-xl p-6 shadow-sm">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-bold text-portal-900">
-                    Complaints ({complaints?.length || 0})
-                  </h2>
-                  <button className="flex items-center px-3 py-1 bg-portal-100 text-portal-700 rounded hover:bg-portal-200">
-                    <Download size={16} className="mr-2" />
-                    Download Table
-                  </button>
-                </div>
-                
-                {isLoadingComplaints ? (
-                  <div className="flex justify-center py-12">
-                    <p>Loading complaints...</p>
-                  </div>
-                ) : complaints?.length === 0 ? (
-                  <p className="text-center py-4 text-portal-500">No complaints found</p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full border-collapse">
-                      <thead>
-                        <tr className="border-b border-portal-200">
-                          <th className="text-left py-3 px-4 font-medium text-portal-600">Category</th>
-                          <th className="text-left py-3 px-4 font-medium text-portal-600">CRID</th>
-                          <th className="text-left py-3 px-4 font-medium text-portal-600">Incident Date</th>
-                          <th className="text-left py-3 px-4 font-medium text-portal-600">Officer</th>
-                          <th className="text-left py-3 px-4 font-medium text-portal-600">Attachments</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {complaints?.map((complaint) => (
-                          <React.Fragment key={complaint.complaint_id}>
-                            <tr 
-                              className="border-b border-portal-100 hover:bg-portal-50 cursor-pointer"
-                              onClick={() => toggleComplaint(complaint.complaint_id)}
-                            >
-                              <td className="py-3 px-4">
-                                <div className="flex items-center">
-                                  {expandedComplaint === complaint.complaint_id ? (
-                                    <ChevronUp size={16} className="mr-2" />
-                                  ) : (
-                                    <ChevronDown size={16} className="mr-2" />
-                                  )}
-                                  <div>
-                                    {complaint.final_finding === "Not Sustained" && (
-                                      <span className="text-xs text-blue-500 block">Not Sustained</span>
-                                    )}
-                                    {complaint.final_finding === "Exonerated" && (
-                                      <span className="text-xs text-green-500 block">Exonerated</span>
-                                    )}
-                                    {complaint.final_finding === "Unfounded" && (
-                                      <span className="text-xs text-orange-500 block">Unfounded</span>
-                                    )}
-                                    {complaint.category}
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="py-3 px-4">{complaint.crid}</td>
-                              <td className="py-3 px-4">{complaint.incident_date}</td>
-                              <td className="py-3 px-4">{complaint.officer_name}</td>
-                              <td className="py-3 px-4">
-                                {complaint.attachments > 0 ? (
-                                  <span className="flex items-center">
-                                    <FileText size={14} className="mr-1" />
-                                    {complaint.attachments} linked
-                                  </span>
-                                ) : (
-                                  <span className="text-portal-400">0 linked</span>
-                                )}
-                              </td>
-                            </tr>
-                            {expandedComplaint === complaint.complaint_id && (
-                              <tr className="bg-portal-50">
-                                <td colSpan={5} className="p-4">
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                      <h4 className="font-medium mb-2">Category</h4>
-                                      <p className="text-portal-600 mb-4">{complaint.category}</p>
-                                      
-                                      <h4 className="font-medium mb-2">Final Finding</h4>
-                                      <p className="text-portal-600 mb-4">{complaint.final_finding || "Pending"}</p>
-                                      
-                                      <h4 className="font-medium mb-2">Final Outcome</h4>
-                                      <p className="text-portal-600">{complaint.final_outcome || "No Action Taken"}</p>
-                                    </div>
-                                    
-                                    <div>
-                                      <h4 className="font-medium mb-2">Investigation Timeline</h4>
-                                      <div className="relative pl-6 pb-3 border-l border-portal-300">
-                                        <div className="absolute left-0 top-0 w-3 h-3 -ml-1.5 rounded-full bg-portal-500"></div>
-                                        <p className="font-medium">Incident Date</p>
-                                        <p className="text-portal-600 mb-4">Investigation Begins<br/>{complaint.incident_date}</p>
-                                        
-                                        <div className="absolute left-0 bottom-0 w-3 h-3 -ml-1.5 rounded-full bg-portal-500"></div>
-                                        <p className="font-medium">Investigation Closed (Unknown)</p>
-                                        <p className="text-portal-600">One year later</p>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  
-                                  <div className="mt-4">
-                                    <h4 className="font-medium mb-2">Complaining Witness</h4>
-                                    <div className="flex flex-wrap gap-2">
-                                      <span className="bg-portal-100 px-3 py-1 rounded-full text-sm">White, Male</span>
-                                      <span className="bg-portal-100 px-3 py-1 rounded-full text-sm">Black, Male</span>
-                                    </div>
-                                  </div>
-                                  
-                                  <div className="mt-4 grid grid-cols-2 gap-4">
-                                    <div>
-                                      <h4 className="font-medium mb-2">Address</h4>
-                                      <p className="text-portal-600">CHICAGO IL</p>
-                                    </div>
-                                    <div>
-                                      <h4 className="font-medium mb-2">Location Type</h4>
-                                      <p className="text-portal-600">Urban</p>
-                                    </div>
-                                  </div>
-                                  
-                                  <div className="mt-4">
-                                    <h4 className="font-medium mb-2">Documents</h4>
-                                    <button className="text-portal-600 hover:text-portal-900 px-3 py-1 bg-portal-100 rounded-md text-sm">
-                                      Request
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            )}
-                          </React.Fragment>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </Layout>
-  );
-};
-
-export default DataTool;
+                      {searchResults.
