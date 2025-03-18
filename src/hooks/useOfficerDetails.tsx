@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { differenceInYears } from 'date-fns';
@@ -142,7 +141,7 @@ export const useOfficerDetails = (officerId: number) => {
 
     // Sum up settlements
     const totalSettlements = officerLawsuits.reduce((sum, link) => {
-      return sum + (link.lawsuit?.settlement_amount || a0);
+      return sum + (link.lawsuit?.settlement_amount || 0);
     }, 0);
 
     return {
