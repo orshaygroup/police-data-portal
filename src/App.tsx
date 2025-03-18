@@ -11,6 +11,7 @@ import Documents from "./pages/Documents";
 import Chat from "./pages/Chat";
 import OfficerDetails from "./pages/OfficerDetails";
 import NotFound from "./pages/NotFound";
+import Lawsuits from "./pages/Lawsuits";
 
 const queryClient = new QueryClient();
 
@@ -27,7 +28,7 @@ const App = () => (
           <Route path="/documents" element={<Documents />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/officers/:id" element={<OfficerDetails />} />
-          <Route path="/lawsuits" element={<Index />} />
+          <Route path="/lawsuits" element={<Lawsuits />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

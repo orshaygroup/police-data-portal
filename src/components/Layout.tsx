@@ -1,9 +1,15 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Search } from 'lucide-react';
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation();
+  
+  const isActive = (path: string) => {
+    return location.pathname === path ? 'text-portal-900 font-semibold' : 'text-portal-600 hover:text-portal-900';
+  };
+  
   return (
     <div className="min-h-screen bg-portal-50">
       <nav className="glass-panel fixed top-0 w-full z-50 px-6 py-4">
@@ -13,16 +19,19 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </Link>
           
           <div className="flex items-center space-x-6">
-            <Link to="/data" className="text-portal-600 hover:text-portal-900 transition-colors">
+            <Link to="/data" className={`transition-colors ${isActive('/data')}`}>
               Data Tool
             </Link>
-            <Link to="/search" className="text-portal-600 hover:text-portal-900 transition-colors">
+            <Link to="/search" className={`transition-colors ${isActive('/search')}`}>
               Search
             </Link>
-            <Link to="/documents" className="text-portal-600 hover:text-portal-900 transition-colors">
+            <Link to="/documents" className={`transition-colors ${isActive('/documents')}`}>
               Documents
             </Link>
-            <Link to="/chat" className="text-portal-600 hover:text-portal-900 transition-colors">
+            <Link to="/lawsuits" className={`transition-colors ${isActive('/lawsuits')}`}>
+              Lawsuits
+            </Link>
+            <Link to="/chat" className={`transition-colors ${isActive('/chat')}`}>
               AI Assistant
             </Link>
           </div>
@@ -62,6 +71,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 <li>
                   <Link to="/search" className="text-portal-200 hover:text-white transition-colors text-sm">
                     Search Database
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/lawsuits" className="text-portal-200 hover:text-white transition-colors text-sm">
+                    Lawsuits Database
                   </Link>
                 </li>
                 <li>

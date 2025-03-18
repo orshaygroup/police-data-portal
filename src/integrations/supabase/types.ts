@@ -289,6 +289,93 @@ export type Database = {
           },
         ]
       }
+      Police_Data_Lawsuit_Officer_Link: {
+        Row: {
+          allegation_in_lawsuit: string | null
+          created_at: string
+          lawsuit_id: number | null
+          lawsuit_officer_link_id: number
+          officer_id: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          allegation_in_lawsuit?: string | null
+          created_at?: string
+          lawsuit_id?: number | null
+          lawsuit_officer_link_id?: number
+          officer_id?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          allegation_in_lawsuit?: string | null
+          created_at?: string
+          lawsuit_id?: number | null
+          lawsuit_officer_link_id?: number
+          officer_id?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Police_Data_Lawsuit_Officer_Link_lawsuit_id_fkey"
+            columns: ["lawsuit_id"]
+            isOneToOne: false
+            referencedRelation: "Police_Data_Lawsuits"
+            referencedColumns: ["lawsuit_id"]
+          },
+          {
+            foreignKeyName: "Police_Data_Lawsuit_Officer_Link_officer_id_fkey"
+            columns: ["officer_id"]
+            isOneToOne: false
+            referencedRelation: "Police_Data_Officers"
+            referencedColumns: ["officer_id"]
+          },
+        ]
+      }
+      Police_Data_Lawsuits: {
+        Row: {
+          case_number: string | null
+          court_name: string | null
+          created_at: string
+          date_closed: string | null
+          date_filed: string | null
+          final_outcome: string | null
+          lawsuit_id: number
+          lawsuit_status: string | null
+          plaintiff_name: string | null
+          settlement_amount: number | null
+          Summary: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          case_number?: string | null
+          court_name?: string | null
+          created_at?: string
+          date_closed?: string | null
+          date_filed?: string | null
+          final_outcome?: string | null
+          lawsuit_id?: number
+          lawsuit_status?: string | null
+          plaintiff_name?: string | null
+          settlement_amount?: number | null
+          Summary?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          case_number?: string | null
+          court_name?: string | null
+          created_at?: string
+          date_closed?: string | null
+          date_filed?: string | null
+          final_outcome?: string | null
+          lawsuit_id?: number
+          lawsuit_status?: string | null
+          plaintiff_name?: string | null
+          settlement_amount?: number | null
+          Summary?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       Police_Data_Officer_Allegation_Link: {
         Row: {
           allegation_id: number | null
