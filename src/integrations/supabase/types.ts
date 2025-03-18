@@ -546,6 +546,7 @@ export type Database = {
           middle_initial: string | null
           officer_id: number
           race: string | null
+          Salary: number | null
         }
         Insert: {
           active_status?: string | null
@@ -559,6 +560,7 @@ export type Database = {
           middle_initial?: string | null
           officer_id: number
           race?: string | null
+          Salary?: number | null
         }
         Update: {
           active_status?: string | null
@@ -572,6 +574,7 @@ export type Database = {
           middle_initial?: string | null
           officer_id?: number
           race?: string | null
+          Salary?: number | null
         }
         Relationships: []
       }
