@@ -52,11 +52,18 @@ export const useComplaintDetails = (complaintId: string | undefined) => {
     queryFn: async () => {
       if (!complaintId) return { complaint: null, officers: [], complainants: [], timeline: [] };
 
+      // Convert string ID to number for database queries
+      const numericComplaintId = parseInt(complaintId, 10);
+      
+      if (isNaN(numericComplaintId)) {
+        throw new Error('Invalid complaint ID');
+      }
+
       // Fetch complaint details
       const { data: complaint, error: complaintError } = await supabase
         .from('Police_Data_Complaints')
         .select('*')
-        .eq('complaint_id', complaintId)
+        .eq('complaint_id', numericComplaintId)
         .single();
 
       if (complaintError) throw complaintError;
@@ -78,19 +85,21 @@ export const useComplaintDetails = (complaintId: string | undefined) => {
             gender
           )
         `)
-        .eq('complaint_id', complaintId);
+        .eq('complaint_id', numericComplaintId);
 
       if (officersError) throw officersError;
 
       // Process officers data
       const officers = accusedOfficers.map((link) => {
+        if (!link.officer) return null;
+        
         return {
           ...link.officer,
           role_in_incident: link.role_in_incident,
           allegations_count: Math.floor(Math.random() * 10) + 1, // Placeholder data
           allegations_sustained_count: Math.floor(Math.random() * 5) // Placeholder data
         };
-      });
+      }).filter(Boolean) as AccusedOfficerType[];
 
       // Fetch complainants
       const { data: complainantLinks, error: complainantsError } = await supabase
@@ -107,17 +116,19 @@ export const useComplaintDetails = (complaintId: string | undefined) => {
             gender
           )
         `)
-        .eq('complaint_id', complaintId);
+        .eq('complaint_id', numericComplaintId);
 
       if (complainantsError) throw complainantsError;
 
       // Process complainants data
       const complainants = complainantLinks.map((link) => {
+        if (!link.complainant) return null;
+        
         return {
           ...link.complainant,
           role_in_incident: link.complainant_role
         };
-      });
+      }).filter(Boolean) as ComplainantType[];
 
       // Generate timeline (placeholder data)
       const timeline: TimelineEvent[] = [
