@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import { Layout } from '@/components/Layout';
+import Layout from '@/components/Layout';
 import { useComplaintDetails } from '@/hooks/useComplaintDetails';
 import { ComplaintHeader } from '@/components/complaint/ComplaintHeader';
 import { AccusedOfficers } from '@/components/complaint/AccusedOfficers';
@@ -12,7 +12,14 @@ import { Separator } from '@/components/ui/separator';
 
 const ComplaintDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const { complaint, officers, complainants, timeline, isLoading, error } = useComplaintDetails(id);
+  const { data, isLoading, error } = useComplaintDetails(id);
+  
+  const { complaint, officers, complainants, timeline } = data || { 
+    complaint: null, 
+    officers: [], 
+    complainants: [], 
+    timeline: [] 
+  };
 
   return (
     <Layout>
