@@ -1,13 +1,24 @@
 
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
+import { useSearchData } from '@/hooks/useSearchData';
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
+  const { data: searchResults, isLoading: isSearching } = useSearchData(searchQuery);
   
   const isActive = (path: string) => {
     return location.pathname === path ? 'text-portal-900 font-semibold' : 'text-portal-600 hover:text-portal-900';
+  };
+
+  const handleSearchSelection = (officerId?: number) => {
+    if (officerId) {
+      navigate(`/officers/${officerId}`);
+    }
+    setSearchQuery('');
   };
   
   return (
@@ -42,7 +53,122 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               type="search"
               placeholder="Search officers, complaints, or documents..."
               className="pl-10 pr-4 py-2 rounded-full border border-portal-200 focus:border-portal-400 focus:ring-1 focus:ring-portal-400 outline-none w-64 text-sm"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
+            
+            {searchQuery.length >= 2 && (
+              <div className="absolute w-72 right-0 mt-1 bg-white rounded-lg shadow-lg border border-portal-200 max-h-96 overflow-y-auto z-50">
+                {isSearching ? (
+                  <div className="p-4 text-center text-portal-500">
+                    Searching...
+                  </div>
+                ) : searchResults ? (
+                  <div className="p-2">
+                    {searchResults.officers.length > 0 && (
+                      <div className="mb-3">
+                        <div className="px-3 py-1 text-sm font-semibold text-portal-600 bg-portal-50">
+                          Officers
+                        </div>
+                        {searchResults.officers.map((result, idx) => (
+                          <div 
+                            key={`officer-${idx}`}
+                            className="px-3 py-2 hover:bg-portal-50 cursor-pointer text-sm"
+                            onClick={() => handleSearchSelection(result.id)}
+                          >
+                            {result.value}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {searchResults.officerRace.length > 0 && (
+                      <div className="mb-3">
+                        <div className="px-3 py-1 text-sm font-semibold text-portal-600 bg-portal-50">
+                          Officer Race
+                        </div>
+                        {searchResults.officerRace.map((result, idx) => (
+                          <div 
+                            key={`race-${idx}`}
+                            className="px-3 py-2 hover:bg-portal-50 cursor-pointer text-sm"
+                            onClick={() => {
+                              navigate('/search', { state: { searchTerm: result.value } });
+                              setSearchQuery('');
+                            }}
+                          >
+                            {result.value}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {searchResults.locations.length > 0 && (
+                      <div className="mb-3">
+                        <div className="px-3 py-1 text-sm font-semibold text-portal-600 bg-portal-50">
+                          Areas
+                        </div>
+                        {searchResults.locations.map((result, idx) => (
+                          <div 
+                            key={`location-${idx}`}
+                            className="px-3 py-2 hover:bg-portal-50 cursor-pointer text-sm"
+                            onClick={() => {
+                              navigate('/search', { state: { searchTerm: result.value } });
+                              setSearchQuery('');
+                            }}
+                          >
+                            {result.value}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {searchResults.incidents.length > 0 && (
+                      <div className="mb-3">
+                        <div className="px-3 py-1 text-sm font-semibold text-portal-600 bg-portal-50">
+                          Incidents
+                        </div>
+                        {searchResults.incidents.map((result, idx) => (
+                          <div 
+                            key={`incident-${idx}`}
+                            className="px-3 py-2 hover:bg-portal-50 cursor-pointer text-sm"
+                            onClick={() => {
+                              navigate('/search', { state: { searchTerm: result.value } });
+                              setSearchQuery('');
+                            }}
+                          >
+                            {result.value}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {searchResults.complainantRace.length > 0 && (
+                      <div className="mb-3">
+                        <div className="px-3 py-1 text-sm font-semibold text-portal-600 bg-portal-50">
+                          Complainant Race
+                        </div>
+                        {searchResults.complainantRace.map((result, idx) => (
+                          <div 
+                            key={`comp-race-${idx}`}
+                            className="px-3 py-2 hover:bg-portal-50 cursor-pointer text-sm"
+                            onClick={() => {
+                              navigate('/search', { state: { searchTerm: result.value } });
+                              setSearchQuery('');
+                            }}
+                          >
+                            {result.value}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : searchQuery.length >= 2 ? (
+                  <div className="p-4 text-center text-portal-500">
+                    No results found
+                  </div>
+                ) : null}
+              </div>
+            )}
           </div>
         </div>
       </nav>

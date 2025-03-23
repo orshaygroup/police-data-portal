@@ -1,11 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { ArrowRight } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 interface SearchResult {
   officer_id: number;
@@ -18,8 +18,21 @@ interface SearchResult {
   award_count: number;
 }
 
+interface LocationState {
+  searchTerm?: string;
+}
+
 const Search = () => {
+  const location = useLocation();
+  const state = location.state as LocationState;
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // If we have a search term in the location state, use it
+  useEffect(() => {
+    if (state?.searchTerm) {
+      setSearchQuery(state.searchTerm);
+    }
+  }, [state?.searchTerm]);
 
   const { data: results, isLoading } = useQuery({
     queryKey: ['officers', searchQuery],
@@ -35,7 +48,7 @@ const Search = () => {
           last_name,
           current_rank
         `)
-        .or(`first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%`)
+        .or(`first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,race.ilike.%${searchQuery}%`)
         .limit(10);
 
       if (error) throw error;
