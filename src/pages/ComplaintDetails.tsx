@@ -8,11 +8,30 @@ import { AccusedOfficers } from '@/components/complaint/AccusedOfficers';
 import { ComplaintTimeline } from '@/components/complaint/ComplaintTimeline';
 import { Complainants } from '@/components/complaint/Complainants';
 import { ComplaintOutcome } from '@/components/complaint/ComplaintOutcome';
-import { Separator } from '@/components/ui/separator';
+import { LoadingState } from '@/components/complaint/LoadingState';
+import { ErrorState } from '@/components/complaint/ErrorState';
+import { DetailLayout } from '@/components/complaint/DetailLayout';
+import { ErrorBoundary } from '@/components/complaint/ErrorBoundary';
 
 const ComplaintDetails = () => {
   const { id } = useParams<{ id: string }>();
   const { data, isLoading, error } = useComplaintDetails(id);
+  
+  if (isLoading) {
+    return (
+      <Layout>
+        <LoadingState />
+      </Layout>
+    );
+  }
+  
+  if (error) {
+    return (
+      <Layout>
+        <ErrorState error={error as Error} />
+      </Layout>
+    );
+  }
   
   const { complaint, officers, complainants, timeline } = data || { 
     complaint: null, 
@@ -21,29 +40,27 @@ const ComplaintDetails = () => {
     timeline: [] 
   };
 
+  if (!complaint) {
+    return (
+      <Layout>
+        <ErrorState error={new Error('Complaint not found')} />
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
-      <div className="container mx-auto py-8 px-4">
-        <ComplaintHeader complaint={complaint} isLoading={isLoading} />
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 space-y-6">
-            <AccusedOfficers officers={officers || []} isLoading={isLoading} />
-            
-            <Separator />
-            
-            <ComplaintTimeline timeline={timeline || []} isLoading={isLoading} />
-            
-            <Separator />
-            
-            <ComplaintOutcome complaint={complaint} isLoading={isLoading} />
-          </div>
-          
-          <div className="md:col-span-1 space-y-6">
-            <Complainants complainants={complainants || []} isLoading={isLoading} />
-          </div>
-        </div>
-      </div>
+      <ErrorBoundary>
+        <DetailLayout
+          header={<ComplaintHeader complaint={complaint} isLoading={false} />}
+          mainContent={[
+            <AccusedOfficers key="officers" officers={officers || []} isLoading={false} />,
+            <ComplaintTimeline key="timeline" timeline={timeline || []} isLoading={false} />,
+            <ComplaintOutcome key="outcome" complaint={complaint} isLoading={false} />
+          ]}
+          sideContent={<Complainants complainants={complainants || []} isLoading={false} />}
+        />
+      </ErrorBoundary>
     </Layout>
   );
 };
