@@ -90,16 +90,27 @@ export const useComplaintDetails = (complaintId: string | undefined) => {
       if (officersError) throw officersError;
 
       // Process officers data
-      const officers = accusedOfficers.map((link) => {
-        if (!link.officer) return null;
+      const officers: AccusedOfficerType[] = [];
+      for (const link of accusedOfficers) {
+        if (!link.officer || typeof link.officer !== 'object') continue;
         
-        return {
-          ...link.officer,
+        // Safely cast to any for type checking
+        const officer = link.officer as any;
+        
+        officers.push({
+          officer_id: officer.officer_id,
+          first_name: officer.first_name || '',
+          last_name: officer.last_name || '',
+          badge_number: officer.badge_number,
+          current_rank: officer.current_rank,
+          age: officer.age,
+          race: officer.race,
+          gender: officer.gender,
           role_in_incident: link.role_in_incident,
           allegations_count: Math.floor(Math.random() * 10) + 1, // Placeholder data
           allegations_sustained_count: Math.floor(Math.random() * 5) // Placeholder data
-        };
-      }).filter(Boolean) as AccusedOfficerType[];
+        });
+      }
 
       // Fetch complainants
       const { data: complainantLinks, error: complainantsError } = await supabase
@@ -121,14 +132,23 @@ export const useComplaintDetails = (complaintId: string | undefined) => {
       if (complainantsError) throw complainantsError;
 
       // Process complainants data
-      const complainants = complainantLinks.map((link) => {
-        if (!link.complainant) return null;
+      const complainants: ComplainantType[] = [];
+      for (const link of complainantLinks) {
+        if (!link.complainant || typeof link.complainant !== 'object') continue;
         
-        return {
-          ...link.complainant,
+        // Safely cast to any for type checking
+        const complainant = link.complainant as any;
+        
+        complainants.push({
+          complainant_id: complainant.complainant_id,
+          first_name: complainant.first_name || '',
+          last_name: complainant.last_name || '',
+          age: complainant.age,
+          race: complainant.race,
+          gender: complainant.gender,
           role_in_incident: link.complainant_role
-        };
-      }).filter(Boolean) as ComplainantType[];
+        });
+      }
 
       // Generate timeline (placeholder data)
       const timeline: TimelineEvent[] = [
