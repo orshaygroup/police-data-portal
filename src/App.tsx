@@ -10,6 +10,7 @@ import Search from "./pages/Search";
 import Documents from "./pages/Documents";
 import Chat from "./pages/Chat";
 import OfficerDetails from "./pages/OfficerDetails";
+import ComplaintDetails from "./pages/ComplaintDetails";
 import NotFound from "./pages/NotFound";
 import Lawsuits from "./pages/Lawsuits";
 
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/documents" element={<Documents />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/officers/:id" element={<OfficerDetails />} />
+          <Route path="/complaints/:id" element={<ComplaintDetails />} />
           <Route path="/lawsuits" element={<Lawsuits />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
