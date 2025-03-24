@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChartContainer } from '@/components/ui/chart';
 import { useOfficerPercentiles } from '@/hooks/useSearchResults';
@@ -17,6 +17,23 @@ interface OfficerTriangleChartProps {
 
 export const OfficerTriangleChart = ({ officerId }: OfficerTriangleChartProps) => {
   const { data: percentiles, isLoading, error } = useOfficerPercentiles(officerId);
+  const [chartSize, setChartSize] = useState({ width: 300, height: 300 });
+  
+  // Responsive chart sizing
+  useEffect(() => {
+    const handleResize = () => {
+      // Set chart size based on container width
+      const containerWidth = Math.min(window.innerWidth - 40, 600);
+      setChartSize({
+        width: containerWidth,
+        height: containerWidth * 0.8 // Maintain aspect ratio
+      });
+    };
+    
+    handleResize(); // Set initial size
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   if (isLoading) {
     return (
@@ -38,11 +55,10 @@ export const OfficerTriangleChart = ({ officerId }: OfficerTriangleChartProps) =
   }
   
   // Calculate triangle points (equilateral triangle)
-  const height = 300;
-  const width = 300;
+  const { width, height } = chartSize;
   const centerX = width / 2;
   const centerY = height / 2;
-  const radius = Math.min(width, height) * 0.42;
+  const radius = Math.min(width, height) * 0.35; // Reduced to ensure labels fit
   
   // Calculate outer triangle points
   const topPoint = { x: centerX, y: centerY - radius };
@@ -65,9 +81,9 @@ export const OfficerTriangleChart = ({ officerId }: OfficerTriangleChartProps) =
   const innerTrianglePath = `M ${innerTop.x},${innerTop.y} L ${innerLeft.x},${innerLeft.y} L ${innerRight.x},${innerRight.y} Z`;
   
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm h-full">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold text-portal-900">Officer Performance Triangle</h2>
+    <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm h-full w-full overflow-hidden">
+      <div className="flex justify-between items-center mb-2 md:mb-4">
+        <h2 className="text-lg md:text-xl font-semibold text-portal-900">Officer Performance Triangle</h2>
         <HoverCard>
           <HoverCardTrigger asChild>
             <button className="text-portal-600 hover:text-portal-900">
@@ -100,7 +116,7 @@ export const OfficerTriangleChart = ({ officerId }: OfficerTriangleChartProps) =
         </HoverCard>
       </div>
       
-      <div className="relative">
+      <div className="relative flex justify-center w-full">
         <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="mx-auto">
           {/* Background color */}
           <rect x="0" y="0" width={width} height={height} fill="#b7282e" />
@@ -121,26 +137,26 @@ export const OfficerTriangleChart = ({ officerId }: OfficerTriangleChartProps) =
           <circle cx={leftPoint.x} cy={leftPoint.y} r="4" fill="white" />
           <circle cx={rightPoint.x} cy={rightPoint.y} r="4" fill="white" />
           
-          {/* Labels */}
-          <text x={topPoint.x} y={topPoint.y - 15} textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">
+          {/* Labels - slightly adjusted positions for better readability */}
+          <text x={topPoint.x} y={topPoint.y - 10} textAnchor="middle" fill="white" fontSize="10" fontWeight="bold">
             Officer Allegations
           </text>
-          <text x={topPoint.x} y={topPoint.y - 30} textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">
-            {percentiles.officer_percentile}<tspan fontSize="10">th</tspan> percentile
+          <text x={topPoint.x} y={topPoint.y - 25} textAnchor="middle" fill="white" fontSize="10" fontWeight="bold">
+            {percentiles.officer_percentile}<tspan fontSize="8">th</tspan> percentile
           </text>
           
-          <text x={leftPoint.x - 10} y={leftPoint.y + 25} textAnchor="end" fill="white" fontSize="12" fontWeight="bold">
+          <text x={leftPoint.x - 8} y={leftPoint.y + 20} textAnchor="end" fill="white" fontSize="10" fontWeight="bold">
             Civilian Allegations
           </text>
-          <text x={leftPoint.x - 10} y={leftPoint.y + 40} textAnchor="end" fill="white" fontSize="12" fontWeight="bold">
-            {percentiles.civilian_percentile}<tspan fontSize="10">th</tspan> percentile
+          <text x={leftPoint.x - 8} y={leftPoint.y + 35} textAnchor="end" fill="white" fontSize="10" fontWeight="bold">
+            {percentiles.civilian_percentile}<tspan fontSize="8">th</tspan> percentile
           </text>
           
-          <text x={rightPoint.x + 10} y={rightPoint.y + 25} textAnchor="start" fill="white" fontSize="12" fontWeight="bold">
+          <text x={rightPoint.x + 8} y={rightPoint.y + 20} textAnchor="start" fill="white" fontSize="10" fontWeight="bold">
             Use of Force Reports
           </text>
-          <text x={rightPoint.x + 10} y={rightPoint.y + 40} textAnchor="start" fill="white" fontSize="12" fontWeight="bold">
-            {percentiles.force_percentile}<tspan fontSize="10">th</tspan> percentile
+          <text x={rightPoint.x + 8} y={rightPoint.y + 35} textAnchor="start" fill="white" fontSize="10" fontWeight="bold">
+            {percentiles.force_percentile}<tspan fontSize="8">th</tspan> percentile
           </text>
         </svg>
       </div>
