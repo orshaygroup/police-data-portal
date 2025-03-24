@@ -1,46 +1,22 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
-import { useSearchData, SearchResult } from '@/hooks/useSearchData';
+import { useSearchData } from '@/hooks/useSearchData';
+import { useSearchNavigation } from '@/hooks/useSearchNavigation';
+import SearchResultCategory from './search/SearchResultCategory';
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const { data: searchResults, isLoading: isSearching } = useSearchData(searchQuery);
+  const { navigateToResult } = useSearchNavigation();
   
   const isActive = (path: string) => {
     return location.pathname === path ? 'text-portal-900 font-semibold' : 'text-portal-600 hover:text-portal-900';
   };
 
-  const handleSearchSelection = (result: SearchResult) => {
-    if (!result.id) {
-      navigate('/search', { state: { searchTerm: result.value } });
-      setSearchQuery('');
-      return;
-    }
-
-    switch (result.type) {
-      case 'Officer':
-        navigate(`/officers/${result.id}`);
-        setSearchQuery('');
-        break;
-      case 'Incident':
-        navigate(`/complaints/${result.id}`);
-        setSearchQuery('');
-        break;
-      case 'Document':
-        navigate(`/documents?id=${result.id}`);
-        setSearchQuery('');
-        break;
-      case 'Lawsuit':
-        navigate(`/lawsuits?id=${result.id}`);
-        setSearchQuery('');
-        break;
-      default:
-        navigate('/search', { state: { searchTerm: result.value } });
-        setSearchQuery('');
-    }
+  const handleSearchSelection = (result: any) => {
+    navigateToResult(result, () => setSearchQuery(''));
   };
   
   return (
@@ -88,145 +64,75 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 ) : searchResults ? (
                   <div className="p-2">
                     {searchResults.officers.length > 0 && (
-                      <div className="mb-3">
-                        <div className="px-3 py-1 text-sm font-semibold text-portal-600 bg-portal-50">
-                          Officers
-                        </div>
-                        {searchResults.officers.map((result, idx) => (
-                          <div 
-                            key={`officer-${idx}`}
-                            className="px-3 py-2 hover:bg-portal-50 cursor-pointer text-sm"
-                            onClick={() => handleSearchSelection(result)}
-                          >
-                            {result.value}
-                          </div>
-                        ))}
-                      </div>
+                      <SearchResultCategory 
+                        title="Officers" 
+                        results={searchResults.officers} 
+                        onResultClick={handleSearchSelection} 
+                      />
                     )}
 
                     {searchResults.incidents.length > 0 && (
-                      <div className="mb-3">
-                        <div className="px-3 py-1 text-sm font-semibold text-portal-600 bg-portal-50">
-                          Incidents
-                        </div>
-                        {searchResults.incidents.map((result, idx) => (
-                          <div 
-                            key={`incident-${idx}`}
-                            className="px-3 py-2 hover:bg-portal-50 cursor-pointer text-sm"
-                            onClick={() => handleSearchSelection(result)}
-                          >
-                            {result.value}
-                          </div>
-                        ))}
-                      </div>
+                      <SearchResultCategory 
+                        title="Incidents" 
+                        results={searchResults.incidents} 
+                        onResultClick={handleSearchSelection} 
+                      />
                     )}
 
                     {searchResults.documents && searchResults.documents.length > 0 && (
-                      <div className="mb-3">
-                        <div className="px-3 py-1 text-sm font-semibold text-portal-600 bg-portal-50">
-                          Documents
-                        </div>
-                        {searchResults.documents.map((result, idx) => (
-                          <div 
-                            key={`document-${idx}`}
-                            className="px-3 py-2 hover:bg-portal-50 cursor-pointer text-sm"
-                            onClick={() => handleSearchSelection(result)}
-                          >
-                            {result.value}
-                            <span className="text-portal-400 text-xs ml-2">
-                              {result.subtype}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                      <SearchResultCategory 
+                        title="Documents" 
+                        results={searchResults.documents} 
+                        onResultClick={handleSearchSelection} 
+                      />
                     )}
 
                     {searchResults.lawsuits && searchResults.lawsuits.length > 0 && (
-                      <div className="mb-3">
-                        <div className="px-3 py-1 text-sm font-semibold text-portal-600 bg-portal-50">
-                          Lawsuits
-                        </div>
-                        {searchResults.lawsuits.map((result, idx) => (
-                          <div 
-                            key={`lawsuit-${idx}`}
-                            className="px-3 py-2 hover:bg-portal-50 cursor-pointer text-sm"
-                            onClick={() => handleSearchSelection(result)}
-                          >
-                            {result.value}
-                            <span className="text-portal-400 text-xs ml-2">
-                              {result.subtype}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                      <SearchResultCategory 
+                        title="Lawsuits" 
+                        results={searchResults.lawsuits} 
+                        onResultClick={handleSearchSelection} 
+                      />
                     )}
 
                     {searchResults.officerRace.length > 0 && (
-                      <div className="mb-3">
-                        <div className="px-3 py-1 text-sm font-semibold text-portal-600 bg-portal-50">
-                          Officer Race
-                        </div>
-                        {searchResults.officerRace.map((result, idx) => (
-                          <div 
-                            key={`race-${idx}`}
-                            className="px-3 py-2 hover:bg-portal-50 cursor-pointer text-sm"
-                            onClick={() => handleSearchSelection(result)}
-                          >
-                            {result.value}
-                          </div>
-                        ))}
-                      </div>
+                      <SearchResultCategory 
+                        title="Officer Race" 
+                        results={searchResults.officerRace} 
+                        onResultClick={handleSearchSelection} 
+                      />
                     )}
 
                     {searchResults.locations.length > 0 && (
-                      <div className="mb-3">
-                        <div className="px-3 py-1 text-sm font-semibold text-portal-600 bg-portal-50">
-                          Areas
-                        </div>
-                        {searchResults.locations.map((result, idx) => (
-                          <div 
-                            key={`location-${idx}`}
-                            className="px-3 py-2 hover:bg-portal-50 cursor-pointer text-sm"
-                            onClick={() => handleSearchSelection(result)}
-                          >
-                            {result.value}
-                          </div>
-                        ))}
-                      </div>
+                      <SearchResultCategory 
+                        title="Areas" 
+                        results={searchResults.locations} 
+                        onResultClick={handleSearchSelection} 
+                      />
                     )}
 
                     {searchResults.complainantRace.length > 0 && (
-                      <div className="mb-3">
-                        <div className="px-3 py-1 text-sm font-semibold text-portal-600 bg-portal-50">
-                          Complainant Race
-                        </div>
-                        {searchResults.complainantRace.map((result, idx) => (
-                          <div 
-                            key={`comp-race-${idx}`}
-                            className="px-3 py-2 hover:bg-portal-50 cursor-pointer text-sm"
-                            onClick={() => handleSearchSelection(result)}
-                          >
-                            {result.value}
-                          </div>
-                        ))}
-                      </div>
+                      <SearchResultCategory 
+                        title="Complainant Race" 
+                        results={searchResults.complainantRace} 
+                        onResultClick={handleSearchSelection} 
+                      />
                     )}
 
                     {searchResults.findings && searchResults.findings.length > 0 && (
-                      <div className="mb-3">
-                        <div className="px-3 py-1 text-sm font-semibold text-portal-600 bg-portal-50">
-                          Complaint Findings
-                        </div>
-                        {searchResults.findings.map((result, idx) => (
-                          <div 
-                            key={`finding-${idx}`}
-                            className="px-3 py-2 hover:bg-portal-50 cursor-pointer text-sm"
-                            onClick={() => handleSearchSelection(result)}
-                          >
-                            {result.value}
-                          </div>
-                        ))}
-                      </div>
+                      <SearchResultCategory 
+                        title="Complaint Findings" 
+                        results={searchResults.findings} 
+                        onResultClick={handleSearchSelection} 
+                      />
+                    )}
+
+                    {searchResults.outcomes && searchResults.outcomes.length > 0 && (
+                      <SearchResultCategory 
+                        title="Complaint Outcomes" 
+                        results={searchResults.outcomes} 
+                        onResultClick={handleSearchSelection} 
+                      />
                     )}
                   </div>
                 ) : searchQuery.length >= 2 ? (

@@ -1,48 +1,31 @@
 
 import React from 'react';
-import { useSearchData, SearchResult } from '@/hooks/useSearchData';
-import { useNavigate } from 'react-router-dom';
+import { useSearchData } from '@/hooks/useSearchData';
+import { useSearchNavigation } from '@/hooks/useSearchNavigation';
 import SearchResults from './SearchResults';
 
 interface SearchBarProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  setSelectedOfficer: (officerId: number | null) => void;
+  setSelectedOfficer?: (officerId: number | null) => void;
 }
 
-const SearchBar = ({ searchQuery, setSearchQuery, setSelectedOfficer }: SearchBarProps) => {
+const SearchBar = ({ 
+  searchQuery, 
+  setSearchQuery, 
+  setSelectedOfficer 
+}: SearchBarProps) => {
   const { data: searchResults, isLoading: isSearching } = useSearchData(searchQuery);
-  const navigate = useNavigate();
+  const { navigateToResult } = useSearchNavigation();
 
-  const handleResultClick = (result: SearchResult) => {
-    if (!result.id) {
-      navigate('/search', { state: { searchTerm: result.value } });
-      setSearchQuery('');
-      return;
+  const handleResultClick = (result: any) => {
+    // If it's an officer result and we have a setSelectedOfficer function, update the selected officer
+    if (result.type === 'Officer' && setSelectedOfficer && result.id) {
+      setSelectedOfficer(result.id);
     }
-
-    // Navigate based on result type
-    switch (result.type) {
-      case 'Officer':
-        setSelectedOfficer(result.id);
-        setSearchQuery('');
-        break;
-      case 'Incident':
-        navigate(`/complaints/${result.id}`);
-        setSearchQuery('');
-        break;
-      case 'Document':
-        navigate(`/documents?id=${result.id}`);
-        setSearchQuery('');
-        break;
-      case 'Lawsuit':
-        navigate(`/lawsuits?id=${result.id}`);
-        setSearchQuery('');
-        break;
-      default:
-        navigate('/search', { state: { searchTerm: result.value } });
-        setSearchQuery('');
-    }
+    
+    // Use the navigation hook to handle the routing
+    navigateToResult(result, () => setSearchQuery(''));
   };
 
   return (
