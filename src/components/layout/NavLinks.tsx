@@ -23,6 +23,9 @@ const NavLinks = () => {
       <Link to="/lawsuits" className={`transition-colors ${isActive('/lawsuits')}`}>
         Lawsuits
       </Link>
+      <Link to="/ranking" className={`transition-colors ${isActive('/ranking')}`}>
+        Rankings
+      </Link>
       <Link to="/chat" className={`transition-colors ${isActive('/chat')}`}>
         AI Assistant
       </Link>
