@@ -103,13 +103,22 @@ const ComplaintsList = ({ complaints, isLoading, expandedComplaint, toggleCompla
                           <div>
                             <h4 className="font-medium mb-2">Investigation Timeline</h4>
                             <div className="relative pl-6 pb-3 border-l border-portal-300">
-                              <div className="absolute left-0 top-0 w-3 h-3 -ml-1.5 rounded-full bg-portal-500"></div>
-                              <p className="font-medium">Incident Date</p>
-                              <p className="text-portal-600 mb-4">Investigation Begins<br/>{complaint.incident_date}</p>
-                              
-                              <div className="absolute left-0 bottom-0 w-3 h-3 -ml-1.5 rounded-full bg-portal-500"></div>
-                              <p className="font-medium">Investigation Closed (Unknown)</p>
-                              <p className="text-portal-600">One year later</p>
+                              {complaint.investigation_timeline && complaint.investigation_timeline.length > 0 ? (
+                                complaint.investigation_timeline.map((event, idx) => (
+                                  <div key={idx} className="mb-4 last:mb-0">
+                                    <div className="absolute left-0 w-3 h-3 -ml-1.5 rounded-full bg-portal-500"></div>
+                                    <p className="font-medium">{event.event_type}</p>
+                                    <p className="text-portal-600">{event.date}</p>
+                                    {event.notes && <p className="text-sm text-portal-500 mt-1">{event.notes}</p>}
+                                  </div>
+                                ))
+                              ) : (
+                                <>
+                                  <div className="absolute left-0 top-0 w-3 h-3 -ml-1.5 rounded-full bg-portal-500"></div>
+                                  <p className="font-medium">Incident Date</p>
+                                  <p className="text-portal-600 mb-4">Investigation Begins<br/>{complaint.incident_date}</p>
+                                </>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -117,19 +126,26 @@ const ComplaintsList = ({ complaints, isLoading, expandedComplaint, toggleCompla
                         <div className="mt-4">
                           <h4 className="font-medium mb-2">Complaining Witness</h4>
                           <div className="flex flex-wrap gap-2">
-                            <span className="bg-portal-100 px-3 py-1 rounded-full text-sm">White, Male</span>
-                            <span className="bg-portal-100 px-3 py-1 rounded-full text-sm">Black, Male</span>
+                            {complaint.complainants && complaint.complainants.length > 0 ? (
+                              complaint.complainants.map((complainant, idx) => (
+                                <span key={idx} className="bg-portal-100 px-3 py-1 rounded-full text-sm">
+                                  {complainant.race}, {complainant.gender}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-portal-400">No complainant information available</span>
+                            )}
                           </div>
                         </div>
                         
                         <div className="mt-4 grid grid-cols-2 gap-4">
                           <div>
                             <h4 className="font-medium mb-2">Address</h4>
-                            <p className="text-portal-600">CHICAGO IL</p>
+                            <p className="text-portal-600">{complaint.location || "Unknown location"}</p>
                           </div>
                           <div>
                             <h4 className="font-medium mb-2">Location Type</h4>
-                            <p className="text-portal-600">Urban</p>
+                            <p className="text-portal-600">{complaint.location_type || "Unknown"}</p>
                           </div>
                         </div>
                         
