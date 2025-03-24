@@ -76,12 +76,12 @@ const ComplaintsList = ({ complaints, isLoading, expandedComplaint, toggleCompla
                     <td className="py-3 px-4">{complaint.officer_name}</td>
                     <td className="py-3 px-4">
                       {complaint.attachments > 0 ? (
-                        <span className="flex items-center">
+                        <span className="flex items-center text-portal-600">
                           <FileText size={14} className="mr-1" />
-                          {complaint.attachments} linked
+                          {complaint.attachments} attachment{complaint.attachments !== 1 ? 's' : ''}
                         </span>
                       ) : (
-                        <span className="text-portal-400">0 linked</span>
+                        <span className="text-portal-400">No attachments</span>
                       )}
                     </td>
                   </tr>
