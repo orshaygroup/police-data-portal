@@ -166,11 +166,16 @@ const DocumentsTable = () => {
         <Pagination>
           <PaginationContent>
             <PaginationItem>
-              <PaginationPrevious 
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className={page === 1 ? "pointer-events-none opacity-50" : ""}
-              />
+              {page === 1 ? (
+                <PaginationPrevious 
+                  className="pointer-events-none opacity-50"
+                  onClick={() => {}} // Empty function for disabled state
+                />
+              ) : (
+                <PaginationPrevious 
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                />
+              )}
             </PaginationItem>
             
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -200,11 +205,16 @@ const DocumentsTable = () => {
             })}
             
             <PaginationItem>
-              <PaginationNext 
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className={page === totalPages ? "pointer-events-none opacity-50" : ""}
-              />
+              {page === totalPages ? (
+                <PaginationNext 
+                  className="pointer-events-none opacity-50"
+                  onClick={() => {}} // Empty function for disabled state
+                />
+              ) : (
+                <PaginationNext 
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                />
+              )}
             </PaginationItem>
           </PaginationContent>
         </Pagination>
