@@ -6,7 +6,7 @@ import { OfficerRankHistory } from '@/components/officer/OfficerRankHistory';
 import { OfficerComplaints } from '@/components/officer/OfficerComplaints';
 import { OfficerUseOfForce } from '@/components/officer/OfficerUseOfForce';
 import { OfficerAwards } from '@/components/officer/OfficerAwards';
-import { OfficerTriangleChart } from '@/components/officer/OfficerTriangleChart';
+import { OfficerRadarChart } from '@/components/officer/OfficerRadarChart';
 import { OfficerDownload } from '@/components/officer/OfficerDownload';
 import { OfficerAdditionalInfo } from '@/components/officer/OfficerAdditionalInfo';
 
@@ -32,8 +32,8 @@ export const OfficerDetailsLayout = ({
   isLoading
 }: OfficerDetailsLayoutProps) => {
   return (
-    <div className="container mx-auto px-4 md:px-6 py-6 md:py-8">
-      <div className="glass-panel rounded-2xl p-4 md:p-8">
+    <div className="container mx-auto px-6 py-8">
+      <div className="glass-panel rounded-2xl p-8">
         <div className="flex justify-between items-start mb-6">
           <h1 className="text-2xl font-bold text-portal-900">Officer Details</h1>
           <OfficerDownload 
@@ -48,9 +48,13 @@ export const OfficerDetailsLayout = ({
           />
         </div>
         
-        <div className="grid grid-cols-1 gap-6 mb-8">
-          <OfficerBasicInfo officer={officer} isLoading={isLoading} />
-          <OfficerTriangleChart officerId={officer?.id || 0} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <div className="order-2 lg:order-1">
+            <OfficerRadarChart officer={officer} complaints={complaints} useOfForce={useOfForce} />
+          </div>
+          <div className="order-1 lg:order-2">
+            <OfficerBasicInfo officer={officer} isLoading={isLoading} />
+          </div>
         </div>
         
         <div className="mb-8">
