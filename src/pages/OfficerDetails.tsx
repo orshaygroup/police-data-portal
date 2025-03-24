@@ -7,7 +7,6 @@ import { OfficerRankHistory } from '@/components/officer/OfficerRankHistory';
 import { useOfficerDetails } from '@/hooks/useOfficerDetails';
 import { OfficerDetailsHeader } from '@/components/officer/OfficerDetailsHeader';
 import { OfficerTopSection } from '@/components/officer/OfficerTopSection';
-import { OfficerAdditionalInfo } from '@/components/officer/OfficerAdditionalInfo';
 import { OfficerDetailedSections } from '@/components/officer/OfficerDetailedSections';
 
 const OfficerDetails = () => {
@@ -63,8 +62,6 @@ const OfficerDetails = () => {
           <div className="mb-8">
             <OfficerStatsCards stats={stats} isLoading={isLoading} />
           </div>
-          
-          <OfficerAdditionalInfo />
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
             <OfficerRankHistory rankHistory={rankHistory} />
