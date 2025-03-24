@@ -1,14 +1,6 @@
 
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Radar,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  ResponsiveContainer
-} from 'recharts';
 import { OfficerTriangleChart } from './OfficerTriangleChart';
 
 interface OfficerRadarChartProps {
@@ -26,6 +18,9 @@ export const OfficerRadarChart = ({ officer, complaints, useOfForce }: OfficerRa
     );
   }
 
-  // Use the triangle chart with the officer's ID
-  return <OfficerTriangleChart officerId={officer.officer_id} />;
+  return (
+    <div className="w-full max-w-full overflow-hidden">
+      <OfficerTriangleChart officerId={officer.officer_id} />
+    </div>
+  );
 };

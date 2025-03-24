@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChartContainer } from '@/components/ui/chart';
 import { useOfficerPercentiles } from '@/hooks/useSearchResults';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Info } from 'lucide-react';
@@ -37,12 +36,12 @@ export const OfficerTriangleChart = ({ officerId }: OfficerTriangleChartProps) =
     );
   }
   
-  // Use viewBox for responsive SVG
-  const viewBoxWidth = 360;
-  const viewBoxHeight = 320;
+  // Increase viewBox dimensions for better spacing
+  const viewBoxWidth = 500;
+  const viewBoxHeight = 400;
   const centerX = viewBoxWidth / 2;
   const centerY = viewBoxHeight / 2;
-  const radius = Math.min(viewBoxWidth, viewBoxHeight) * 0.4;
+  const radius = Math.min(viewBoxWidth, viewBoxHeight) * 0.35; // Reduced size to give more room for labels
   
   // Calculate outer triangle points
   const topPoint = { x: centerX, y: centerY - radius };
@@ -64,8 +63,13 @@ export const OfficerTriangleChart = ({ officerId }: OfficerTriangleChartProps) =
   const outerTrianglePath = `M ${topPoint.x},${topPoint.y} L ${leftPoint.x},${leftPoint.y} L ${rightPoint.x},${rightPoint.y} Z`;
   const innerTrianglePath = `M ${innerTop.x},${innerTop.y} L ${innerLeft.x},${innerLeft.y} L ${innerRight.x},${innerRight.y} Z`;
   
+  // Better label positioning with more space for text
+  const topLabelY = topPoint.y - 40;
+  const leftLabelX = leftPoint.x - 60;
+  const rightLabelX = rightPoint.x + 60;
+  
   return (
-    <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm h-full">
+    <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm h-full w-full overflow-visible">
       <div className="flex justify-between items-center mb-3 md:mb-4">
         <h2 className="text-lg md:text-xl font-semibold text-portal-900">Officer Performance Triangle</h2>
         <HoverCard>
@@ -101,53 +105,54 @@ export const OfficerTriangleChart = ({ officerId }: OfficerTriangleChartProps) =
       </div>
       
       <div className="flex justify-center items-center w-full">
-        <svg 
-          className="w-full max-w-[340px] h-auto"
-          viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`}
-          preserveAspectRatio="xMidYMid meet"
-        >
-          {/* Background color */}
-          <rect x="0" y="0" width={viewBoxWidth} height={viewBoxHeight} fill="#b7282e" />
-          
-          {/* Guide lines */}
-          <line x1={centerX} y1={centerY} x2={topPoint.x} y2={topPoint.y} stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
-          <line x1={centerX} y1={centerY} x2={leftPoint.x} y2={leftPoint.y} stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
-          <line x1={centerX} y1={centerY} x2={rightPoint.x} y2={rightPoint.y} stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
-          
-          {/* Outer triangle */}
-          <path d={outerTrianglePath} fill="rgba(255,255,255,0.2)" stroke="white" strokeWidth="2" />
-          
-          {/* Inner triangle */}
-          <path d={innerTrianglePath} fill="black" fillOpacity="0.8" stroke="white" strokeWidth="1.5" />
-          
-          {/* Corner points */}
-          <circle cx={topPoint.x} cy={topPoint.y} r="4" fill="white" />
-          <circle cx={leftPoint.x} cy={leftPoint.y} r="4" fill="white" />
-          <circle cx={rightPoint.x} cy={rightPoint.y} r="4" fill="white" />
-          
-          {/* Labels - Improved positioning for better readability */}
-          <text x={topPoint.x} y={topPoint.y - 15} textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">
-            Officer Allegations
-          </text>
-          <text x={topPoint.x} y={topPoint.y - 30} textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">
-            {percentiles.officer_percentile}<tspan fontSize="10">th</tspan> percentile
-          </text>
-          
-          {/* Adjusted label positions to avoid overflow */}
-          <text x={leftPoint.x - 20} y={leftPoint.y + 25} textAnchor="end" fill="white" fontSize="12" fontWeight="bold">
-            Civilian Allegations
-          </text>
-          <text x={leftPoint.x - 20} y={leftPoint.y + 40} textAnchor="end" fill="white" fontSize="12" fontWeight="bold">
-            {percentiles.civilian_percentile}<tspan fontSize="10">th</tspan> percentile
-          </text>
-          
-          <text x={rightPoint.x + 20} y={rightPoint.y + 25} textAnchor="start" fill="white" fontSize="12" fontWeight="bold">
-            Use of Force Reports
-          </text>
-          <text x={rightPoint.x + 20} y={rightPoint.y + 40} textAnchor="start" fill="white" fontSize="12" fontWeight="bold">
-            {percentiles.force_percentile}<tspan fontSize="10">th</tspan> percentile
-          </text>
-        </svg>
+        <div className="w-full aspect-[5/4] relative">
+          <svg 
+            className="w-full h-full"
+            viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`}
+            preserveAspectRatio="xMidYMid meet"
+          >
+            {/* Background color */}
+            <rect x="0" y="0" width={viewBoxWidth} height={viewBoxHeight} fill="#b7282e" />
+            
+            {/* Guide lines */}
+            <line x1={centerX} y1={centerY} x2={topPoint.x} y2={topPoint.y} stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
+            <line x1={centerX} y1={centerY} x2={leftPoint.x} y2={leftPoint.y} stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
+            <line x1={centerX} y1={centerY} x2={rightPoint.x} y2={rightPoint.y} stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
+            
+            {/* Outer triangle */}
+            <path d={outerTrianglePath} fill="rgba(255,255,255,0.2)" stroke="white" strokeWidth="2" />
+            
+            {/* Inner triangle */}
+            <path d={innerTrianglePath} fill="black" fillOpacity="0.8" stroke="white" strokeWidth="1.5" />
+            
+            {/* Corner points */}
+            <circle cx={topPoint.x} cy={topPoint.y} r="4" fill="white" />
+            <circle cx={leftPoint.x} cy={leftPoint.y} r="4" fill="white" />
+            <circle cx={rightPoint.x} cy={rightPoint.y} r="4" fill="white" />
+            
+            {/* Labels with improved positioning */}
+            <text x={topPoint.x} y={topLabelY} textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">
+              Officer Allegations
+            </text>
+            <text x={topPoint.x} y={topLabelY - 20} textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">
+              {percentiles.officer_percentile}<tspan fontSize="12">th</tspan> percentile
+            </text>
+            
+            <text x={leftLabelX} y={leftPoint.y + 5} textAnchor="end" fill="white" fontSize="14" fontWeight="bold">
+              Civilian Allegations
+            </text>
+            <text x={leftLabelX} y={leftPoint.y + 25} textAnchor="end" fill="white" fontSize="14" fontWeight="bold">
+              {percentiles.civilian_percentile}<tspan fontSize="12">th</tspan> percentile
+            </text>
+            
+            <text x={rightLabelX} y={rightPoint.y + 5} textAnchor="start" fill="white" fontSize="14" fontWeight="bold">
+              Use of Force Reports
+            </text>
+            <text x={rightLabelX} y={rightPoint.y + 25} textAnchor="start" fill="white" fontSize="14" fontWeight="bold">
+              {percentiles.force_percentile}<tspan fontSize="12">th</tspan> percentile
+            </text>
+          </svg>
+        </div>
       </div>
     </div>
   );
