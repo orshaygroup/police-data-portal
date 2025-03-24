@@ -45,10 +45,8 @@ export const useComplaintData = (selectedOfficer: number | null, officers: Offic
       // Fetch attachment counts for each complaint
       const { data: attachmentCounts, error: attachmentsError } = await supabase
         .from('Police_Data_Attachments')
-        .select('complaint_id, count')
-        .in('complaint_id', complaintIds)
-        .select('complaint_id', { count: 'exact' })
-        .eq('complaint_id', complaintIds);
+        .select('complaint_id')
+        .in('complaint_id', complaintIds);
 
       // Create a map of complaint_id to attachment count
       const attachmentCountMap = new Map();
