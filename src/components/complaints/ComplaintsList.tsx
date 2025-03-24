@@ -1,7 +1,7 @@
-
 import React from 'react';
 import { Download, ChevronDown, ChevronUp, FileText } from 'lucide-react';
 import { Complaint } from '@/hooks/useComplaintData';
+import { Link } from 'react-router-dom';
 
 interface ComplaintsListProps {
   complaints: Complaint[] | undefined;
@@ -151,9 +151,12 @@ const ComplaintsList = ({ complaints, isLoading, expandedComplaint, toggleCompla
                         
                         <div className="mt-4">
                           <h4 className="font-medium mb-2">Documents</h4>
-                          <button className="text-portal-600 hover:text-portal-900 px-3 py-1 bg-portal-100 rounded-md text-sm">
+                          <Link 
+                            to="/documents" 
+                            className="inline-block text-portal-600 hover:text-portal-900 px-3 py-1 bg-portal-100 rounded-md text-sm hover:bg-portal-200 transition-colors"
+                          >
                             Request
-                          </button>
+                          </Link>
                         </div>
                       </td>
                     </tr>
