@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useQuery } from '@tanstack/react-query';
-import { useLocation } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from "@/integrations/supabase/client";
+import { useSearchNavigation } from '@/hooks/useSearchNavigation';
 import SearchForm from '@/components/search/SearchForm';
 import OfficerSearchResults from '@/components/search/OfficerSearchResults';
 import ComplaintSearchResults from '@/components/search/ComplaintSearchResults';
@@ -12,23 +11,18 @@ import DocumentSearchResults from '@/components/search/DocumentSearchResults';
 import LawsuitSearchResults from '@/components/search/LawsuitSearchResults';
 import { useFormattingUtils } from '@/hooks/useFormattingUtils';
 
-interface LocationState {
-  searchTerm?: string;
-}
-
 const Search = () => {
-  const location = useLocation();
-  const state = location.state as LocationState;
-  const [searchQuery, setSearchQuery] = useState('');
+  const { getSearchParams } = useSearchNavigation();
+  const { searchTerm } = getSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchTerm || '');
   const [activeTab, setActiveTab] = useState('officers');
   const { formatDate, formatCurrency } = useFormattingUtils();
   
-  // If we have a search term in the location state, use it
   useEffect(() => {
-    if (state?.searchTerm) {
-      setSearchQuery(state.searchTerm);
+    if (searchTerm) {
+      setSearchQuery(searchTerm);
     }
-  }, [state?.searchTerm]);
+  }, [searchTerm]);
 
   const { data: officerResults, isLoading: isLoadingOfficers } = useQuery({
     queryKey: ['officers', searchQuery],
@@ -49,7 +43,6 @@ const Search = () => {
 
       if (error) throw error;
 
-      // Get counts for each officer
       const officersWithCounts = await Promise.all(
         (officers || []).map(async (officer) => {
           const [complaints, useOfForce, awards] = await Promise.all([
@@ -81,7 +74,6 @@ const Search = () => {
     enabled: searchQuery.length >= 3
   });
 
-  // Query for complaints
   const { data: complaintResults, isLoading: isLoadingComplaints } = useQuery({
     queryKey: ['complaints', searchQuery],
     queryFn: async () => {
@@ -106,7 +98,6 @@ const Search = () => {
     enabled: searchQuery.length >= 3 && activeTab === 'complaints'
   });
 
-  // Query for documents
   const { data: documentResults, isLoading: isLoadingDocuments } = useQuery({
     queryKey: ['documents', searchQuery],
     queryFn: async () => {
@@ -130,7 +121,6 @@ const Search = () => {
     enabled: searchQuery.length >= 3 && activeTab === 'documents'
   });
 
-  // Query for lawsuits
   const { data: lawsuitResults, isLoading: isLoadingLawsuits } = useQuery({
     queryKey: ['lawsuits', searchQuery],
     queryFn: async () => {

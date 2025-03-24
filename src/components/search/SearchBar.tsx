@@ -25,7 +25,13 @@ const SearchBar = ({
     }
     
     // Use the navigation hook to handle the routing
-    navigateToResult(result, () => setSearchQuery(''));
+    navigateToResult(
+      result, 
+      {
+        preserveSearchTerm: true
+      },
+      () => setSearchQuery('')
+    );
   };
 
   return (

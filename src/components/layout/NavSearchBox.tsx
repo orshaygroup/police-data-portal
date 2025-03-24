@@ -11,7 +11,14 @@ const NavSearchBox = () => {
   const { navigateToResult } = useSearchNavigation();
 
   const handleSearchSelection = (result: any) => {
-    navigateToResult(result, () => setSearchQuery(''));
+    navigateToResult(
+      result, 
+      { 
+        showToast: true,
+        preserveSearchTerm: true 
+      }, 
+      () => setSearchQuery('')
+    );
   };
 
   return (
