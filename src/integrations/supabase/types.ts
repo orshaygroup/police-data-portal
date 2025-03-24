@@ -248,6 +248,67 @@ export type Database = {
           },
         ]
       }
+      Police_Data_Documents: {
+        Row: {
+          complaint_id: number | null
+          created_at: string
+          description: string | null
+          doc_title: string
+          doc_type: string | null
+          document_id: number
+          file_url: string | null
+          lawsuit_id: number | null
+          officer_id: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          complaint_id?: number | null
+          created_at?: string
+          description?: string | null
+          doc_title: string
+          doc_type?: string | null
+          document_id?: number
+          file_url?: string | null
+          lawsuit_id?: number | null
+          officer_id?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          complaint_id?: number | null
+          created_at?: string
+          description?: string | null
+          doc_title?: string
+          doc_type?: string | null
+          document_id?: number
+          file_url?: string | null
+          lawsuit_id?: number | null
+          officer_id?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Police_Data_Documents_complaint_id_fkey"
+            columns: ["complaint_id"]
+            isOneToOne: false
+            referencedRelation: "Police_Data_Complaints"
+            referencedColumns: ["complaint_id"]
+          },
+          {
+            foreignKeyName: "Police_Data_Documents_lawsuit_id_fkey"
+            columns: ["lawsuit_id"]
+            isOneToOne: false
+            referencedRelation: "Police_Data_Lawsuits"
+            referencedColumns: ["lawsuit_id"]
+          },
+          {
+            foreignKeyName: "Police_Data_Documents_officer_id_fkey"
+            columns: ["officer_id"]
+            isOneToOne: false
+            referencedRelation: "Police_Data_Officers"
+            referencedColumns: ["officer_id"]
+          },
+        ]
+      }
       Police_Data_Investigation_Outcomes: {
         Row: {
           complaint_id: number | null
