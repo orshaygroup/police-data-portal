@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -44,10 +43,8 @@ const OfficerDetails = () => {
     }
 
     try {
-      // Create workbook and worksheets
       const workbook = XLSX.utils.book_new();
       
-      // Basic Info
       const basicInfoData = [{
         'Officer ID': officer.officer_id,
         'Badge Number': officer.badge_number,
@@ -65,7 +62,6 @@ const OfficerDetails = () => {
       const basicInfoWS = XLSX.utils.json_to_sheet(basicInfoData);
       XLSX.utils.book_append_sheet(workbook, basicInfoWS, "Basic Info");
       
-      // Stats
       const statsData = [{
         'Total Complaints': stats.totalComplaints,
         'Total Allegations': stats.totalAllegations,
@@ -78,7 +74,6 @@ const OfficerDetails = () => {
       const statsWS = XLSX.utils.json_to_sheet(statsData);
       XLSX.utils.book_append_sheet(workbook, statsWS, "Statistics");
       
-      // Rank History
       if (rankHistory && rankHistory.length > 0) {
         const rankHistoryData = rankHistory.map(rank => ({
           'Rank': rank.rank_name,
@@ -90,7 +85,6 @@ const OfficerDetails = () => {
         XLSX.utils.book_append_sheet(workbook, rankHistoryWS, "Rank History");
       }
       
-      // Complaints
       if (complaints && complaints.length > 0) {
         const complaintsData = complaints.map(item => ({
           'Complaint ID': item.complaint?.complaint_id,
@@ -105,7 +99,6 @@ const OfficerDetails = () => {
         XLSX.utils.book_append_sheet(workbook, complaintsWS, "Complaints");
       }
       
-      // Use of Force
       if (useOfForce && useOfForce.length > 0) {
         const useOfForceData = useOfForce.map(incident => ({
           'Incident ID': incident.use_of_force_id,
@@ -120,7 +113,6 @@ const OfficerDetails = () => {
         XLSX.utils.book_append_sheet(workbook, useOfForceWS, "Use of Force");
       }
       
-      // Awards
       if (awards && awards.length > 0) {
         const awardsData = awards.map(award => ({
           'Award ID': award.award_id,
@@ -133,7 +125,6 @@ const OfficerDetails = () => {
         XLSX.utils.book_append_sheet(workbook, awardsWS, "Awards");
       }
       
-      // Lawsuits
       if (lawsuits && lawsuits.length > 0) {
         const lawsuitsData = lawsuits.map(link => ({
           'Lawsuit ID': link.lawsuit?.lawsuit_id,
@@ -151,7 +142,6 @@ const OfficerDetails = () => {
         XLSX.utils.book_append_sheet(workbook, lawsuitsWS, "Lawsuits");
       }
       
-      // Generate Excel file
       XLSX.writeFile(workbook, `Officer_${officer.officer_id}_${officer.last_name || 'Unknown'}.xlsx`);
       
       toast({
@@ -185,7 +175,6 @@ const OfficerDetails = () => {
     <Layout>
       <div className="container mx-auto px-6 py-8">
         <div className="glass-panel rounded-2xl p-8">
-          {/* Top Section with Download Button */}
           <div className="flex justify-between items-start mb-6">
             <h1 className="text-2xl font-bold text-portal-900">Officer Details</h1>
             <Button 
@@ -199,7 +188,6 @@ const OfficerDetails = () => {
             </Button>
           </div>
           
-          {/* Top Section - Officer Information and Radar Chart */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <div className="order-2 lg:order-1">
               <OfficerRadarChart officer={officer} complaints={complaints} useOfForce={useOfForce} />
@@ -209,18 +197,15 @@ const OfficerDetails = () => {
             </div>
           </div>
           
-          {/* Middle Section - Stats Cards */}
           <div className="mb-8">
             <OfficerStatsCards stats={stats} isLoading={isLoading} />
           </div>
 
-          {/* Bottom Section - Will be left blank for now */}
           <div className="bg-white rounded-xl p-6 shadow-sm mb-8">
             <h2 className="text-xl font-semibold text-portal-900 mb-4">Additional Information</h2>
             <p className="text-portal-600">This section will be updated in a future prompt.</p>
           </div>
           
-          {/* Existing sections moved below */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
             <OfficerRankHistory rankHistory={rankHistory} />
           </div>
