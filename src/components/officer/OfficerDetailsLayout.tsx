@@ -32,8 +32,8 @@ export const OfficerDetailsLayout = ({
   isLoading
 }: OfficerDetailsLayoutProps) => {
   return (
-    <div className="container mx-auto px-6 py-8">
-      <div className="glass-panel rounded-2xl p-8">
+    <div className="container mx-auto px-4 md:px-6 py-6 md:py-8">
+      <div className="glass-panel rounded-2xl p-4 md:p-8">
         <div className="flex justify-between items-start mb-6">
           <h1 className="text-2xl font-bold text-portal-900">Officer Details</h1>
           <OfficerDownload 
@@ -48,9 +48,13 @@ export const OfficerDetailsLayout = ({
           />
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <div className="order-2 lg:order-1">
-            <OfficerRadarChart officer={officer} complaints={complaints} useOfForce={useOfForce} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8 mb-8">
+          <div className="order-2 lg:order-1 w-full">
+            <OfficerRadarChart 
+              officer={officer} 
+              complaints={complaints} 
+              useOfForce={useOfForce} 
+            />
           </div>
           <div className="order-1 lg:order-2">
             <OfficerBasicInfo officer={officer} isLoading={isLoading} />

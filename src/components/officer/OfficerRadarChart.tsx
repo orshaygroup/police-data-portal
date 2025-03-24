@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -25,15 +26,6 @@ export const OfficerRadarChart = ({ officer, complaints, useOfForce }: OfficerRa
     );
   }
 
-  // For the traditional radar chart (keeping as fallback or toggle option)
-  const data = [
-    { category: 'Complaints', A: complaints?.length || 0, fullMark: 10 },
-    { category: 'Use of Force', A: useOfForce?.length || 0, fullMark: 10 },
-    { category: 'Lawsuits', A: 0, fullMark: 10 }, // Will be updated when lawsuit data is available
-    { category: 'Awards', A: 3, fullMark: 10 },
-    { category: 'Years of Service', A: 5, fullMark: 10 },
-  ];
-
-  // Use the new triangle chart instead of the radar chart
+  // Use the triangle chart with the officer's ID
   return <OfficerTriangleChart officerId={officer.officer_id} />;
 };

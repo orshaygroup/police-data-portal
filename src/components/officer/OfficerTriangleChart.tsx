@@ -37,12 +37,12 @@ export const OfficerTriangleChart = ({ officerId }: OfficerTriangleChartProps) =
     );
   }
   
-  // Calculate triangle points (equilateral triangle)
-  const height = 300;
-  const width = 300;
-  const centerX = width / 2;
-  const centerY = height / 2;
-  const radius = Math.min(width, height) * 0.42;
+  // Use viewBox for responsive SVG
+  const viewBoxWidth = 360;
+  const viewBoxHeight = 320;
+  const centerX = viewBoxWidth / 2;
+  const centerY = viewBoxHeight / 2;
+  const radius = Math.min(viewBoxWidth, viewBoxHeight) * 0.4;
   
   // Calculate outer triangle points
   const topPoint = { x: centerX, y: centerY - radius };
@@ -65,9 +65,9 @@ export const OfficerTriangleChart = ({ officerId }: OfficerTriangleChartProps) =
   const innerTrianglePath = `M ${innerTop.x},${innerTop.y} L ${innerLeft.x},${innerLeft.y} L ${innerRight.x},${innerRight.y} Z`;
   
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm h-full">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold text-portal-900">Officer Performance Triangle</h2>
+    <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm h-full">
+      <div className="flex justify-between items-center mb-3 md:mb-4">
+        <h2 className="text-lg md:text-xl font-semibold text-portal-900">Officer Performance Triangle</h2>
         <HoverCard>
           <HoverCardTrigger asChild>
             <button className="text-portal-600 hover:text-portal-900">
@@ -100,10 +100,14 @@ export const OfficerTriangleChart = ({ officerId }: OfficerTriangleChartProps) =
         </HoverCard>
       </div>
       
-      <div className="relative">
-        <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="mx-auto">
+      <div className="flex justify-center items-center w-full">
+        <svg 
+          className="w-full max-w-[340px] h-auto"
+          viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`}
+          preserveAspectRatio="xMidYMid meet"
+        >
           {/* Background color */}
-          <rect x="0" y="0" width={width} height={height} fill="#b7282e" />
+          <rect x="0" y="0" width={viewBoxWidth} height={viewBoxHeight} fill="#b7282e" />
           
           {/* Guide lines */}
           <line x1={centerX} y1={centerY} x2={topPoint.x} y2={topPoint.y} stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
@@ -121,7 +125,7 @@ export const OfficerTriangleChart = ({ officerId }: OfficerTriangleChartProps) =
           <circle cx={leftPoint.x} cy={leftPoint.y} r="4" fill="white" />
           <circle cx={rightPoint.x} cy={rightPoint.y} r="4" fill="white" />
           
-          {/* Labels */}
+          {/* Labels - Improved positioning for better readability */}
           <text x={topPoint.x} y={topPoint.y - 15} textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">
             Officer Allegations
           </text>
@@ -129,17 +133,18 @@ export const OfficerTriangleChart = ({ officerId }: OfficerTriangleChartProps) =
             {percentiles.officer_percentile}<tspan fontSize="10">th</tspan> percentile
           </text>
           
-          <text x={leftPoint.x - 10} y={leftPoint.y + 25} textAnchor="end" fill="white" fontSize="12" fontWeight="bold">
+          {/* Adjusted label positions to avoid overflow */}
+          <text x={leftPoint.x - 20} y={leftPoint.y + 25} textAnchor="end" fill="white" fontSize="12" fontWeight="bold">
             Civilian Allegations
           </text>
-          <text x={leftPoint.x - 10} y={leftPoint.y + 40} textAnchor="end" fill="white" fontSize="12" fontWeight="bold">
+          <text x={leftPoint.x - 20} y={leftPoint.y + 40} textAnchor="end" fill="white" fontSize="12" fontWeight="bold">
             {percentiles.civilian_percentile}<tspan fontSize="10">th</tspan> percentile
           </text>
           
-          <text x={rightPoint.x + 10} y={rightPoint.y + 25} textAnchor="start" fill="white" fontSize="12" fontWeight="bold">
+          <text x={rightPoint.x + 20} y={rightPoint.y + 25} textAnchor="start" fill="white" fontSize="12" fontWeight="bold">
             Use of Force Reports
           </text>
-          <text x={rightPoint.x + 10} y={rightPoint.y + 40} textAnchor="start" fill="white" fontSize="12" fontWeight="bold">
+          <text x={rightPoint.x + 20} y={rightPoint.y + 40} textAnchor="start" fill="white" fontSize="12" fontWeight="bold">
             {percentiles.force_percentile}<tspan fontSize="10">th</tspan> percentile
           </text>
         </svg>
