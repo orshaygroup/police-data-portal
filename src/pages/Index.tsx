@@ -56,7 +56,7 @@ const Index = () => {
               Track officers with multiple complaints and disciplinary actions.
             </p>
             <Link
-              to="/officers/repeat-offenders"
+              to="/ranking"
               className="inline-flex items-center text-portal-900 hover:text-portal-700"
             >
               View List <ArrowRight className="ml-2" size={16} />
