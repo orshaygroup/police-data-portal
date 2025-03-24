@@ -116,11 +116,11 @@ async function calculateAllOfficersPercentiles(officers: any[]): Promise<RankedO
 
       const percentiles = {
         officer_id: officer.officer_id,
-        officer_allegations_percentile: calculatePercentile(officerAllegations, allOfficerAllegations),
+        officer_allegations_percentile: calculatePercentile(officerAllegations, allOfficerAllegations as number[]),
         civilian_allegations_percentile: 0, // Not calculated as we don't have reliable data
-        use_of_force_percentile: calculatePercentile(useOfForce, allUseOfForce),
-        awards_percentile: Math.max(100 - calculatePercentile(awards, allAwards), 0),
-        service_years_percentile: Math.max(100 - calculatePercentile(serviceYears, allServiceYears), 0)
+        use_of_force_percentile: calculatePercentile(useOfForce, allUseOfForce as number[]),
+        awards_percentile: Math.max(100 - calculatePercentile(awards, allAwards as number[]), 0),
+        service_years_percentile: Math.max(100 - calculatePercentile(serviceYears, allServiceYears as number[]), 0)
       };
 
       // Calculate a composite score for ranking

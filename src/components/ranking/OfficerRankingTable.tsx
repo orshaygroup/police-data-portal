@@ -138,10 +138,10 @@ export const OfficerRankingTable: React.FC<OfficerRankingTableProps> = ({ office
 };
 
 // Helper function to get badge variant based on percentile
-function getBadgeVariant(percentile: number): "default" | "destructive" | "outline" | "secondary" | "success" {
+// Modified to only return valid badge variants
+function getBadgeVariant(percentile: number): "default" | "destructive" | "outline" | "secondary" {
   if (percentile >= 80) return "destructive";
   if (percentile >= 60) return "secondary";
   if (percentile >= 40) return "outline";
-  if (percentile >= 20) return "default";
-  return "success";
+  return "default"; // Including the lowest percentiles (0-40%)
 }
