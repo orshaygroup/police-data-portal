@@ -3,6 +3,8 @@ import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChartContainer } from '@/components/ui/chart';
 import { useOfficerPercentiles } from '@/hooks/useSearchResults';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { Info } from 'lucide-react';
 
 interface TrianglePoint {
   x: number;
@@ -64,7 +66,39 @@ export const OfficerTriangleChart = ({ officerId }: OfficerTriangleChartProps) =
   
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm h-full">
-      <h2 className="text-xl font-semibold text-portal-900 mb-4">Officer Performance Triangle</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold text-portal-900">Officer Performance Triangle</h2>
+        <HoverCard>
+          <HoverCardTrigger asChild>
+            <button className="text-portal-600 hover:text-portal-900">
+              <Info size={20} />
+            </button>
+          </HoverCardTrigger>
+          <HoverCardContent className="w-80 p-4 bg-white shadow-lg rounded-lg border border-portal-200">
+            <div className="space-y-4">
+              <h3 className="font-semibold mb-2">What is this triangle?</h3>
+              <p className="text-sm text-portal-600">
+                The corners of the triangle show the percentile score for this officer in each of three types of data: 
+                complaints from civilians, complaints from other police officers, and self-reported use of force.
+              </p>
+              <p className="text-sm text-portal-600">
+                If one corner of the black inner triangle is close to reaching the outer triangle, then this officer 
+                is named in a relatively high rate of incidents of that corner's type compared with other officers.
+              </p>
+              <h3 className="font-semibold mb-2">What is the scale?</h3>
+              <p className="text-sm text-portal-600">
+                If an officer's percentile score for civilian complaints is 99%, then this means that they were accused 
+                in more civilian complaints per year than 99% of other officers (for the years where data is available).
+              </p>
+              <p className="text-sm text-portal-600">
+                Civilian and internal complaint percentiles are based on data that is only available for complaints since 2000, 
+                use of force data is only available since 2004. The overall allegation count percentiles are calculated 
+                using data that reaches back to 1988.
+              </p>
+            </div>
+          </HoverCardContent>
+        </HoverCard>
+      </div>
       
       <div className="relative">
         <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="mx-auto">
@@ -109,23 +143,6 @@ export const OfficerTriangleChart = ({ officerId }: OfficerTriangleChartProps) =
             {percentiles.force_percentile}<tspan fontSize="10">th</tspan> percentile
           </text>
         </svg>
-      </div>
-      
-      <div className="mt-4 text-sm text-portal-600">
-        <h3 className="font-semibold mb-2">What is this triangle?</h3>
-        <p className="mb-2">
-          The corners of the triangle show the percentile score for this officer in each of three types of data: 
-          complaints from civilians, complaints from other police officers, and self-reported use of force.
-        </p>
-        <p className="mb-2">
-          If one corner of the black inner triangle is close to reaching the outer triangle, then this officer 
-          is named in a relatively high rate of incidents of that corner's type compared with other officers.
-        </p>
-        <h3 className="font-semibold mb-2 mt-4">What is the scale?</h3>
-        <p>
-          If an officer's percentile score for civilian complaints is 99%, then this means that they were accused 
-          in more civilian complaints per year than 99% of other officers (for the years where data is available).
-        </p>
       </div>
     </div>
   );
