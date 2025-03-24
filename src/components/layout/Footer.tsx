@@ -11,6 +11,7 @@ const Footer = () => {
             <h3 className="text-lg font-semibold mb-4">About</h3>
             <p className="text-portal-200 text-sm">
               Dedicated to transparency and accountability in law enforcement through comprehensive data analysis and reporting.
+              Every neighborhood deserves protection rooted in trust.
             </p>
           </div>
           <div>
@@ -36,17 +37,29 @@ const Footer = () => {
                   Document Repository
                 </Link>
               </li>
+              <li>
+                <Link to="/ranking" className="text-portal-200 hover:text-white transition-colors text-sm">
+                  Officer Rankings
+                </Link>
+              </li>
             </ul>
           </div>
           <div>
             <h3 className="text-lg font-semibold mb-4">Contact</h3>
             <p className="text-portal-200 text-sm">
               For inquiries and support, please email: <br />
-              <a href="mailto:support@policedataportal.org" className="hover:text-white transition-colors">
-                support@policedataportal.org
+              <a href="mailto:support@nopddataportal.org" className="hover:text-white transition-colors">
+                support@nopddataportal.org
               </a>
             </p>
+            <p className="text-portal-200 text-sm mt-4">
+              New Orleans Independent Police Monitor<br />
+              In partnership with NOPD
+            </p>
           </div>
+        </div>
+        <div className="border-t border-portal-700 mt-8 pt-6 text-center text-portal-300 text-sm">
+          © {new Date().getFullYear()} New Orleans Police Data Portal. All rights reserved.
         </div>
       </div>
     </footer>
