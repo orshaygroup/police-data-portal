@@ -53,63 +53,6 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Benefits Sections */}
-        <section className="mb-20">
-          <div className="glass-panel rounded-2xl p-8 md:p-12 mb-8">
-            <h2 className="text-3xl font-bold text-portal-900 mb-8">Unveil the Truth</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <h3 className="text-xl font-semibold text-portal-800 mb-4">Instant Insights</h3>
-                <p className="text-portal-600">
-                  Reveal at-a-glance crime hotspots, officer histories, and complaint trends with dynamic maps and dashboards.
-                </p>
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold text-portal-800 mb-4">Actionable Details</h3>
-                <p className="text-portal-600">
-                  Pinpoint key statistics on use of force, active lawsuits, and policy reforms driving real change in your community.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="glass-panel rounded-2xl p-8 md:p-12 mb-8">
-            <h2 className="text-3xl font-bold text-portal-900 mb-8">Strengthen Community Bonds</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <h3 className="text-xl font-semibold text-portal-800 mb-4">Collaborative Oversight</h3>
-                <p className="text-portal-600">
-                  Monitor repeated misconduct, review disciplinary outcomes, and champion accountability alongside neighbors.
-                </p>
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold text-portal-800 mb-4">Informed Decisions</h3>
-                <p className="text-portal-600">
-                  Stay engaged with the latest data, then join public forums and advocacy groups equipped with undeniable facts.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="glass-panel rounded-2xl p-8 md:p-12">
-            <h2 className="text-3xl font-bold text-portal-900 mb-8">Foster Real Reform</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <h3 className="text-xl font-semibold text-portal-800 mb-4">Transparent Reassurance</h3>
-                <p className="text-portal-600">
-                  Understand how local agencies respond to allegations, measure progress, and ensure every voice is heard.
-                </p>
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold text-portal-800 mb-4">Streamlined Access</h3>
-                <p className="text-portal-600">
-                  Simplify your search for official documents and legal filings, cutting through red tape to help you stay informed.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* Quick Access Sections */}
         <h2 className="text-3xl font-bold text-portal-900 mb-8">Quick Access</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
