@@ -162,7 +162,7 @@ const OutcomesTab = () => {
                           <div className="flex items-center justify-between gap-4">
                             <span>{value.toLocaleString()}</span>
                             <span className="text-xs text-portal-500">
-                              ({((value / outcomeData.totalAllegations) * 100).toFixed(1)}%)
+                              ({((Number(value) / outcomeData.totalAllegations) * 100).toFixed(1)}%)
                             </span>
                           </div>
                         </div>
