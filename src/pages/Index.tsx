@@ -98,22 +98,6 @@ const Index = () => {
             </Link>
           </div>
         </div>
-
-        {/* About Us Section */}
-        <section className="mb-20">
-          <div className="glass-panel rounded-2xl p-8 md:p-12">
-            <h2 className="text-3xl font-bold text-portal-900 mb-6">About Us</h2>
-            <p className="text-lg text-portal-600 mb-4">
-              New Orleans Police Data Portal is developed and maintained by the New Orleans Independent Police Monitor 
-              in partnership with the New Orleans Police Department. Dedicated to shining a light on law enforcement activity, 
-              the Portal champions transparency and community-driven solutions.
-            </p>
-            <p className="text-lg text-portal-600">
-              By enabling residents, journalists, and advocacy groups to track complaints, lawsuits, and disciplinary actions, 
-              it fuels meaningful dialogue for a safer, more united New Orleans.
-            </p>
-          </div>
-        </section>
       </div>
     </Layout>
   );

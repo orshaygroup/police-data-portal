@@ -9,9 +9,13 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
             <h3 className="text-lg font-semibold mb-4">About</h3>
+            <p className="text-portal-200 text-sm mb-3">
+              New Orleans Police Data Portal is developed and maintained by the New Orleans Independent Police Monitor 
+              in partnership with the New Orleans Police Department. Dedicated to transparency and accountability in law enforcement through comprehensive data analysis and reporting.
+            </p>
             <p className="text-portal-200 text-sm">
-              Dedicated to transparency and accountability in law enforcement through comprehensive data analysis and reporting.
-              Every neighborhood deserves protection rooted in trust.
+              By enabling residents, journalists, and advocacy groups to track complaints, lawsuits, and disciplinary actions, 
+              it fuels meaningful dialogue for a safer, more united New Orleans.
             </p>
           </div>
           <div>
