@@ -10,6 +10,12 @@ declare global {
   }
 }
 
+// Define the Intercom function interface with the properties we need
+interface IntercomFunction extends Function {
+  c: (args: any) => void;
+  q: any[];
+}
+
 export const useIntercom = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isError, setIsError] = useState(false);
@@ -47,7 +53,7 @@ export const useIntercom = () => {
             var d = document;
             var i = function() {
               i.c(arguments);
-            };
+            } as unknown as IntercomFunction; // Cast to our custom interface
             i.q = [];
             i.c = function(args) {
               i.q.push(args);
