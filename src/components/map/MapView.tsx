@@ -36,53 +36,39 @@ const MapView: React.FC<MapViewProps> = ({
   const [isTokenError, setIsTokenError] = useState(false);
 
   // Fetch the Mapbox token from the Edge Function
-  useEffect(() => {
-    const fetchMapboxToken = async () => {
-      try {
-        setIsLoading(true);
+  const fetchMapboxToken = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      setIsTokenError(false);
+      
+      const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+      
+      if (error) {
+        console.error('Error fetching Mapbox token:', error);
+        setError('Failed to load map: Could not retrieve API key');
+        toast({
+          title: "Map Error",
+          description: "Could not load the map. Please try again later.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      if (data && data.error) {
+        console.error('Error in token response:', data.error);
+        setError(data.error);
         
-        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
-        
-        if (error) {
-          console.error('Error fetching Mapbox token:', error);
-          setError('Failed to load map: Could not retrieve API key');
+        // Check if it's a token format error
+        if (data.error.includes('public token') || data.details?.includes('public token')) {
+          setIsTokenError(true);
           toast({
-            title: "Map Error",
-            description: "Could not load the map. Please try again later.",
+            title: "Mapbox Token Error",
+            description: "Invalid token format. Please update to a public token (pk.*) in Supabase secrets.",
             variant: "destructive"
           });
-          setIsLoading(false);
-          return;
-        }
-        
-        if (data && data.error) {
-          console.error('Error in token response:', data.error);
-          setError(data.error);
-          
-          // Check if it's a token format error
-          if (data.error.includes('public token') || data.details?.includes('public token')) {
-            setIsTokenError(true);
-            toast({
-              title: "Mapbox Token Error",
-              description: "Invalid token format. Please update to a public token (pk.*) in Supabase secrets.",
-              variant: "destructive"
-            });
-          } else {
-            toast({
-              title: "Map Error",
-              description: "Could not initialize the map. Please try again later.",
-              variant: "destructive"
-            });
-          }
-          
-          setIsLoading(false);
-          return;
-        }
-        
-        if (data && data.token) {
-          setMapboxToken(data.token);
         } else {
-          setError('Failed to load map: Invalid API key');
           toast({
             title: "Map Error",
             description: "Could not initialize the map. Please try again later.",
@@ -91,18 +77,35 @@ const MapView: React.FC<MapViewProps> = ({
         }
         
         setIsLoading(false);
-      } catch (err) {
-        console.error('Exception when fetching Mapbox token:', err);
-        setError('Failed to load map: Network error');
-        setIsLoading(false);
+        return;
+      }
+      
+      if (data && data.token) {
+        setMapboxToken(data.token);
+      } else {
+        setError('Failed to load map: Invalid API key');
         toast({
           title: "Map Error",
-          description: "Could not load map data. Please check your connection.",
+          description: "Could not initialize the map. Please try again later.",
           variant: "destructive"
         });
       }
-    };
+      
+      setIsLoading(false);
+    } catch (err) {
+      console.error('Exception when fetching Mapbox token:', err);
+      setError('Failed to load map: Network error');
+      setIsLoading(false);
+      toast({
+        title: "Map Error",
+        description: "Could not load map data. Please check your connection.",
+        variant: "destructive"
+      });
+    }
+  };
 
+  // Fetch the token on component mount
+  useEffect(() => {
     fetchMapboxToken();
   }, []);
 
@@ -221,6 +224,7 @@ const MapView: React.FC<MapViewProps> = ({
         width={width} 
         error={error}
         isTokenError={isTokenError}
+        retryFn={fetchMapboxToken}
       />
     );
   }

@@ -7,6 +7,7 @@ interface MapLoadingStateProps {
   message?: string;
   error?: string;
   isTokenError?: boolean;
+  retryFn?: () => void;
 }
 
 const MapLoadingState: React.FC<MapLoadingStateProps> = ({ 
@@ -14,7 +15,8 @@ const MapLoadingState: React.FC<MapLoadingStateProps> = ({
   width, 
   message = 'Loading map...',
   error,
-  isTokenError = false
+  isTokenError = false,
+  retryFn
 }) => {
   return (
     <div 
@@ -31,9 +33,17 @@ const MapLoadingState: React.FC<MapLoadingStateProps> = ({
             </div>
             <p className="text-sm text-red-500 mb-2">{error}</p>
             {isTokenError && (
-              <p className="text-xs text-gray-500 text-center">
-                Please update your MAPBOX_API secret in Supabase to use a public token (pk.*).
+              <p className="text-xs text-gray-500 text-center mb-3">
+                Please ensure your MAPBOX_API secret in Supabase is a valid public token (pk.*).
               </p>
+            )}
+            {retryFn && (
+              <button 
+                onClick={retryFn} 
+                className="px-3 py-1 bg-portal-500 text-white rounded-md text-xs hover:bg-portal-600 transition-colors"
+              >
+                Retry
+              </button>
             )}
           </>
         ) : (
