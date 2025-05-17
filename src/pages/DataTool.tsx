@@ -7,6 +7,7 @@ import OfficersList from '@/components/officers/OfficersList';
 import ComplaintsList from '@/components/complaints/ComplaintsList';
 import { useOfficerData } from '@/hooks/useOfficerData';
 import { useComplaintData } from '@/hooks/useComplaintData';
+import MapView from '@/components/map/MapView';
 
 const NEW_ORLEANS_LAT = 29.9511;
 const NEW_ORLEANS_LNG = -90.0715;
@@ -57,14 +58,13 @@ const DataTool = () => {
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <h3 className="text-lg font-semibold text-portal-900 mb-4">Incident Distribution Heat Map</h3>
               <div className="h-[400px] w-full">
-                <iframe 
-                  width='100%' 
-                  height='400px' 
-                  src="https://api.mapbox.com/styles/v1/krystalklean/cm7l36unb009x01qpg2jabkuf.html?title=false&access_token=pk.eyJ1Ijoia3J5c3RhbGtsZWFuIiwiYSI6ImNtN2RtaWNhNzA0eXIycW9oNXF2ZGRvN3oifQ.UcFuoQmTxIPGo12Tz8Wq5w&zoomwheel=false#10.33/30.0247/-89.9019" 
-                  title="Police Complaints Heatmap" 
-                  style={{ border: 'none', borderRadius: '0.5rem' }}
-                  allowFullScreen
-                ></iframe>
+                <MapView 
+                  height="400px"
+                  initialZoom={10.33}
+                  initialCenter={[-89.9019, 30.0247]}
+                  heatmapLayer={true}
+                  interactiveMarkers={true}
+                />
               </div>
             </div>
 
