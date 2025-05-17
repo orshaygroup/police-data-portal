@@ -9,9 +9,6 @@ import { useOfficerData } from '@/hooks/useOfficerData';
 import { useComplaintData } from '@/hooks/useComplaintData';
 import MapView from '@/components/map/MapView';
 
-const NEW_ORLEANS_LAT = 29.9511;
-const NEW_ORLEANS_LNG = -90.0715;
-
 const DataTool = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [year, setYear] = useState(new Date().getFullYear().toString());
