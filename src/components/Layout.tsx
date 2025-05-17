@@ -2,6 +2,7 @@
 import React from 'react';
 import Navbar from './layout/Navbar';
 import Footer from './layout/Footer';
+import IntercomChat from './intercom/IntercomChat';
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -11,6 +12,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         {children}
       </main>
       <Footer />
+      <IntercomChat />
     </div>
   );
 };
