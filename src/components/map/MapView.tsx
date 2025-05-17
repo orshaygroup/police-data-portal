@@ -33,6 +33,7 @@ const MapView: React.FC<MapViewProps> = ({
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isTokenError, setIsTokenError] = useState(false);
 
   // Fetch the Mapbox token from the Edge Function
   useEffect(() => {
@@ -50,6 +51,30 @@ const MapView: React.FC<MapViewProps> = ({
             description: "Could not load the map. Please try again later.",
             variant: "destructive"
           });
+          setIsLoading(false);
+          return;
+        }
+        
+        if (data && data.error) {
+          console.error('Error in token response:', data.error);
+          setError(data.error);
+          
+          // Check if it's a token format error
+          if (data.error.includes('public token') || data.details?.includes('public token')) {
+            setIsTokenError(true);
+            toast({
+              title: "Mapbox Token Error",
+              description: "Invalid token format. Please update to a public token (pk.*) in Supabase secrets.",
+              variant: "destructive"
+            });
+          } else {
+            toast({
+              title: "Map Error",
+              description: "Could not initialize the map. Please try again later.",
+              variant: "destructive"
+            });
+          }
+          
           setIsLoading(false);
           return;
         }
@@ -86,61 +111,71 @@ const MapView: React.FC<MapViewProps> = ({
     // Only initialize the map if we have the token and the container is ready
     if (!mapboxToken || !mapContainer.current || map.current) return;
 
-    // Set the Mapbox access token
-    mapboxgl.accessToken = mapboxToken;
+    try {
+      // Set the Mapbox access token
+      mapboxgl.accessToken = mapboxToken;
 
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/krystalklean/cm7l36unb009x01qpg2jabkuf',
-      center: initialCenter,
-      zoom: initialZoom,
-      pitch: 5,
-      interactive: true
-    });
-
-    // Add navigation controls (zoom, pan, etc)
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-
-    // Handle map load
-    map.current.on('load', () => {
-      setMapLoaded(true);
-      console.log('Mapbox map loaded successfully');
-    });
-
-    // Add popup for interactive markers if enabled
-    if (interactiveMarkers) {
-      const popup = new mapboxgl.Popup({
-        closeButton: false,
-        closeOnClick: false
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/krystalklean/cm7l36unb009x01qpg2jabkuf',
+        center: initialCenter,
+        zoom: initialZoom,
+        pitch: 5,
+        interactive: true
       });
 
-      map.current.on('mouseenter', 'complaint-points', (e) => {
-        if (!map.current || !e.features || e.features.length === 0) return;
-        
-        // Change the cursor style
-        map.current.getCanvas().style.cursor = 'pointer';
-        
-        const feature = e.features[0];
-        const coordinates = feature.geometry.type === 'Point' 
-          ? (feature.geometry as any).coordinates.slice() 
-          : null;
+      // Add navigation controls (zoom, pan, etc)
+      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+      // Handle map load
+      map.current.on('load', () => {
+        setMapLoaded(true);
+        console.log('Mapbox map loaded successfully');
+      });
+
+      // Add popup for interactive markers if enabled
+      if (interactiveMarkers) {
+        const popup = new mapboxgl.Popup({
+          closeButton: false,
+          closeOnClick: false
+        });
+
+        map.current.on('mouseenter', 'complaint-points', (e) => {
+          if (!map.current || !e.features || e.features.length === 0) return;
           
-        if (!coordinates) return;
-        
-        const description = `
-          <strong>Complaint ID: ${feature.properties?.complaint_id || 'Unknown'}</strong><br/>
-          Type: ${feature.properties?.complaint_type || 'Not specified'}<br/>
-          Date: ${feature.properties?.incident_date || 'Unknown'}<br/>
-          Status: ${feature.properties?.final_finding || 'Pending'}
-        `;
-        
-        popup.setLngLat(coordinates).setHTML(description).addTo(map.current);
-      });
+          // Change the cursor style
+          map.current.getCanvas().style.cursor = 'pointer';
+          
+          const feature = e.features[0];
+          const coordinates = feature.geometry.type === 'Point' 
+            ? (feature.geometry as any).coordinates.slice() 
+            : null;
+            
+          if (!coordinates) return;
+          
+          const description = `
+            <strong>Complaint ID: ${feature.properties?.complaint_id || 'Unknown'}</strong><br/>
+            Type: ${feature.properties?.complaint_type || 'Not specified'}<br/>
+            Date: ${feature.properties?.incident_date || 'Unknown'}<br/>
+            Status: ${feature.properties?.final_finding || 'Pending'}
+          `;
+          
+          popup.setLngLat(coordinates).setHTML(description).addTo(map.current);
+        });
 
-      map.current.on('mouseleave', 'complaint-points', () => {
-        if (!map.current) return;
-        map.current.getCanvas().style.cursor = '';
-        popup.remove();
+        map.current.on('mouseleave', 'complaint-points', () => {
+          if (!map.current) return;
+          map.current.getCanvas().style.cursor = '';
+          popup.remove();
+        });
+      }
+    } catch (err) {
+      console.error('Error initializing map:', err);
+      setError(`Failed to initialize map: ${err.message}`);
+      toast({
+        title: "Map Error",
+        description: "Could not initialize the map. Please try again later.",
+        variant: "destructive"
       });
     }
 
@@ -181,19 +216,12 @@ const MapView: React.FC<MapViewProps> = ({
   // Show error state if there was a problem
   if (error) {
     return (
-      <div 
-        className={`relative rounded-2xl overflow-hidden bg-red-50 flex items-center justify-center ${className}`} 
-        style={{ 
-          height, 
-          width, 
-          ...style 
-        }}
-      >
-        <div className="text-center p-4">
-          <p className="text-red-500 mb-2">{error}</p>
-          <p className="text-sm text-gray-500">Please check your connection and try again</p>
-        </div>
-      </div>
+      <MapLoadingState 
+        height={height} 
+        width={width} 
+        error={error}
+        isTokenError={isTokenError}
+      />
     );
   }
 

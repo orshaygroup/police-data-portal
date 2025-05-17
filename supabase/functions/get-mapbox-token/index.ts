@@ -24,6 +24,18 @@ serve(async (req) => {
       );
     }
 
+    // Validate that it's a public token (starts with pk.)
+    if (!mapboxToken.startsWith('pk.')) {
+      console.error('MAPBOX_API must be a public token (starting with pk.)');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid Mapbox API key format. Must use a public token (pk.*), not a secret token (sk.*)',
+          details: 'Please update your MAPBOX_API secret in Supabase to use a public token'
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Return the token to the client
     return new Response(
       JSON.stringify({ token: mapboxToken }),
