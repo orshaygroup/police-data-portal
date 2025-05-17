@@ -13,15 +13,14 @@ import OfficerDetails from "./pages/OfficerDetails";
 import ComplaintDetails from "./pages/ComplaintDetails";
 import NotFound from "./pages/NotFound";
 import Lawsuits from "./pages/Lawsuits";
-import Ranking from "./pages/Ranking"; // Add this import
+import Ranking from "./pages/Ranking";
 
+// Create a new QueryClient instance
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
@@ -32,10 +31,12 @@ const App = () => (
           <Route path="/officers/:id" element={<OfficerDetails />} />
           <Route path="/complaints/:id" element={<ComplaintDetails />} />
           <Route path="/lawsuits" element={<Lawsuits />} />
-          <Route path="/ranking" element={<Ranking />} /> {/* Add this route */}
+          <Route path="/ranking" element={<Ranking />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
+      <Toaster />
+      <Sonner />
     </TooltipProvider>
   </QueryClientProvider>
 );
