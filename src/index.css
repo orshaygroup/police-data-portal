@@ -65,3 +65,18 @@
 .slide-up {
   @apply animate-slide-in;
 }
+
+/* Custom Intercom styles */
+iframe#intercom-frame {
+  bottom: 20px !important;
+  right: 20px !important;
+}
+
+.intercom-launcher {
+  background: #6E59A5 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.intercom-lightweight-app-launcher {
+  visibility: visible !important;
+}

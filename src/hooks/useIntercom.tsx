@@ -34,12 +34,16 @@ export const useIntercom = () => {
         
         const appId = data.appId;
         
-        // Initialize Intercom with the fetched App ID
+        // Initialize Intercom with the fetched App ID and make the launcher visible
         window.intercomSettings = {
           app_id: appId,
           alignment: 'right',
           horizontal_padding: 20,
-          vertical_padding: 20
+          vertical_padding: 20,
+          hide_default_launcher: false, // Show the default floating launcher
+          custom_launcher_selector: '', // No custom launcher
+          background_color: '#6E59A5', // Purple color for the launcher
+          launcher_color: '#FFFFFF' // White icon color
         };
         
         // Load the Intercom script
@@ -70,6 +74,18 @@ export const useIntercom = () => {
             l();
           }
         })();
+        
+        // Boot Intercom with custom styling settings
+        if (window.Intercom) {
+          window.Intercom('boot', {
+            app_id: appId,
+            hide_default_launcher: false,
+            custom_launcher_selector: '',
+            alignment: 'right',
+            horizontal_padding: 20,
+            vertical_padding: 20
+          });
+        }
         
         setIsLoaded(true);
       } catch (err) {

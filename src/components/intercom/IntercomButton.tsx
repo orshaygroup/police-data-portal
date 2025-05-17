@@ -15,11 +15,14 @@ const IntercomButton: React.FC<IntercomButtonProps> = ({
 }) => {
   const { openMessenger, isLoaded } = useIntercom();
 
+  // This button can still be used as an additional way to open the chat
+  // But the floating launcher will be shown by default
   return (
     <Button 
       onClick={openMessenger} 
       disabled={!isLoaded} 
       className={`flex items-center gap-2 ${className}`}
+      variant="secondary"
     >
       <MessageSquare size={18} />
       {text}
