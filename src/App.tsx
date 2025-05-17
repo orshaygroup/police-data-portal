@@ -14,6 +14,7 @@ import ComplaintDetails from "./pages/ComplaintDetails";
 import NotFound from "./pages/NotFound";
 import Lawsuits from "./pages/Lawsuits";
 import Ranking from "./pages/Ranking";
+import IntercomChat from "./components/intercom/IntercomChat";
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
       </BrowserRouter>
       <Toaster />
       <Sonner />
+      <IntercomChat />
     </TooltipProvider>
   </QueryClientProvider>
 );
