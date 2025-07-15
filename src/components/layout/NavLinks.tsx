@@ -26,6 +26,9 @@ const NavLinks = () => {
       <Link to="/ranking" className={`transition-colors ${isActive('/ranking')}`}>
         Rankings
       </Link>
+      <Link to="/resources" className={`transition-colors ${isActive('/resources')}`}>
+        Resources
+      </Link>
       <a 
         href="https://nolaoipm.callsplus.net/#/" 
         target="_blank" 
