@@ -30,7 +30,7 @@ const NavLinks = () => {
         href="https://nolaoipm.callsplus.net/#/" 
         target="_blank" 
         rel="noopener noreferrer"
-        className="transition-colors text-portal-600 hover:text-portal-900 bg-primary text-primary-foreground px-3 py-1 rounded-md font-medium"
+        className="transition-colors bg-primary text-primary-foreground hover:bg-primary/90 px-3 py-1 rounded-md font-medium"
       >
         File Complaint
       </a>
