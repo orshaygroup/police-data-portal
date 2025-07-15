@@ -1,21 +1,51 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Plus, Minus } from 'lucide-react';
-import { Officer } from '@/hooks/useOfficerData';
+import { useMapDataContext } from '@/hooks/useMapDataContext';
+import { useOfficerData } from '@/hooks/useOfficerData';
 
 interface OfficersListProps {
-  officers: Officer[] | undefined;
   isLoading: boolean;
   selectedOfficer: number | null;
   toggleOfficer: (officerId: number) => void;
 }
 
-const OfficersList = ({ officers, isLoading, selectedOfficer, toggleOfficer }: OfficersListProps) => {
+const OfficersList = ({ isLoading, selectedOfficer, toggleOfficer }: OfficersListProps) => {
+  const { filteredComplaints } = useMapDataContext();
+  const { data: officers } = useOfficerData();
+
+  // TEMP: Log the first complaint to inspect officer property names
+  if (filteredComplaints.length > 0) {
+    // eslint-disable-next-line no-console
+    console.log('Sample complaint:', filteredComplaints[0]);
+  }
+
+  // Group officers from filtered complaints and join with officer info
+  const officerMap = new Map();
+  filteredComplaints.forEach((complaint) => {
+    if (complaint.officer_id) {
+      if (!officerMap.has(complaint.officer_id)) {
+        // Find officer info
+        const officerInfo = officers?.find(o => o.officer_id === complaint.officer_id);
+        officerMap.set(complaint.officer_id, {
+          officer_id: complaint.officer_id,
+          first_name: officerInfo?.first_name || '',
+          last_name: officerInfo?.last_name || '',
+          gender: officerInfo?.gender || '',
+          race: officerInfo?.race || '',
+          complaint_count: 1
+        });
+      } else {
+        officerMap.get(complaint.officer_id).complaint_count++;
+      }
+    }
+  });
+  const officersInFiltered = Array.from(officerMap.values());
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-portal-900">Officers ({officers?.length || 0})</h2>
+        <h2 className="text-2xl font-bold text-portal-900">Officers ({officersInFiltered.length})</h2>
         <div className="flex space-x-2">
           <button className="p-2 rounded-full bg-portal-100 hover:bg-portal-200">
             <ChevronLeft size={20} />
@@ -34,16 +64,15 @@ const OfficersList = ({ officers, isLoading, selectedOfficer, toggleOfficer }: O
             <p>Loading officers...</p>
           </div>
         ) : (
-          officers?.slice(0, 12).map((officer) => (
+          officersInFiltered.slice(0, 12).map((officer) => (
             <div key={officer.officer_id} className="border border-portal-200 rounded-lg bg-white overflow-hidden">
               <div className="p-4">
                 <Link to={`/officers/${officer.officer_id}`} className="font-bold text-lg text-portal-900 hover:text-portal-700">
-                  {officer.first_name} {officer.last_name}
+                  {officer.first_name || officer.last_name ? `${officer.first_name} ${officer.last_name}` : `Officer #${officer.officer_id}`}
                 </Link>
                 <p className="text-sm text-portal-600 mb-3">
-                  {officer.gender}, {officer.race}
+                  {officer.gender || officer.race ? `${officer.gender}, ${officer.race}` : ''}
                 </p>
-                
                 <div 
                   className="flex justify-between items-center cursor-pointer hover:bg-portal-50 p-2 rounded"
                   onClick={() => toggleOfficer(officer.officer_id)}

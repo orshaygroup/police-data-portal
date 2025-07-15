@@ -14,6 +14,7 @@ import ComplaintDetails from "./pages/ComplaintDetails";
 import NotFound from "./pages/NotFound";
 import Lawsuits from "./pages/Lawsuits";
 import Ranking from "./pages/Ranking";
+import Resources from "./pages/Resources";
 import IntercomChat from "./components/intercom/IntercomChat";
 
 // Create a new QueryClient instance
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/complaints/:id" element={<ComplaintDetails />} />
           <Route path="/lawsuits" element={<Lawsuits />} />
           <Route path="/ranking" element={<Ranking />} />
+          <Route path="/resources" element={<Resources />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

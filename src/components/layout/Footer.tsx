@@ -46,6 +46,11 @@ const Footer = () => {
                   Officer Rankings
                 </Link>
               </li>
+              <li>
+                <Link to="/resources" className="text-portal-200 hover:text-white transition-colors text-sm">
+                  Resources
+                </Link>
+              </li>
             </ul>
           </div>
           <div>

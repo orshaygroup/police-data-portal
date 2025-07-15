@@ -1,35 +1,34 @@
 import React from 'react';
 import { Download, ChevronDown, ChevronUp, FileText } from 'lucide-react';
-import { Complaint } from '@/hooks/useComplaintData';
 import { Link } from 'react-router-dom';
+import { useMapDataContext } from '@/hooks/useMapDataContext';
 
 interface ComplaintsListProps {
-  complaints: Complaint[] | undefined;
   isLoading: boolean;
   expandedComplaint: number | null;
   toggleComplaint: (complaintId: number) => void;
 }
 
-const ComplaintsList = ({ complaints, isLoading, expandedComplaint, toggleComplaint }: ComplaintsListProps) => {
-  if (!complaints || complaints.length === 0) return null;
+const ComplaintsList = ({ isLoading, expandedComplaint, toggleComplaint }: ComplaintsListProps) => {
+  const { filteredComplaints } = useMapDataContext();
+  if (!filteredComplaints || filteredComplaints.length === 0) return null;
 
   return (
     <div className="mt-12 bg-white rounded-xl p-6 shadow-sm">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-portal-900">
-          Complaints ({complaints?.length || 0})
+          Complaints ({filteredComplaints.length})
         </h2>
         <button className="flex items-center px-3 py-1 bg-portal-100 text-portal-700 rounded hover:bg-portal-200">
           <Download size={16} className="mr-2" />
           Download Table
         </button>
       </div>
-      
       {isLoading ? (
         <div className="flex justify-center py-12">
           <p>Loading complaints...</p>
         </div>
-      ) : complaints?.length === 0 ? (
+      ) : filteredComplaints.length === 0 ? (
         <p className="text-center py-4 text-portal-500">No complaints found</p>
       ) : (
         <div className="overflow-x-auto">
@@ -44,7 +43,7 @@ const ComplaintsList = ({ complaints, isLoading, expandedComplaint, toggleCompla
               </tr>
             </thead>
             <tbody>
-              {complaints?.map((complaint) => (
+              {filteredComplaints.map((complaint) => (
                 <React.Fragment key={complaint.complaint_id}>
                   <tr 
                     className="border-b border-portal-100 hover:bg-portal-50 cursor-pointer"
@@ -73,7 +72,7 @@ const ComplaintsList = ({ complaints, isLoading, expandedComplaint, toggleCompla
                     </td>
                     <td className="py-3 px-4">{complaint.crid}</td>
                     <td className="py-3 px-4">{complaint.incident_date}</td>
-                    <td className="py-3 px-4">{complaint.officer_name}</td>
+                    <td className="py-3 px-4">{complaint.officer_name || complaint.officer_id}</td>
                     <td className="py-3 px-4">
                       {complaint.attachments > 0 ? (
                         <span className="flex items-center text-portal-600">
@@ -92,14 +91,11 @@ const ComplaintsList = ({ complaints, isLoading, expandedComplaint, toggleCompla
                           <div>
                             <h4 className="font-medium mb-2">Category</h4>
                             <p className="text-portal-600 mb-4">{complaint.category}</p>
-                            
                             <h4 className="font-medium mb-2">Final Finding</h4>
                             <p className="text-portal-600 mb-4">{complaint.final_finding || "Pending"}</p>
-                            
                             <h4 className="font-medium mb-2">Final Outcome</h4>
                             <p className="text-portal-600">{complaint.final_outcome || "No Action Taken"}</p>
                           </div>
-                          
                           <div>
                             <h4 className="font-medium mb-2">Investigation Timeline</h4>
                             <div className="relative pl-6 pb-3 border-l border-portal-300">
@@ -122,7 +118,6 @@ const ComplaintsList = ({ complaints, isLoading, expandedComplaint, toggleCompla
                             </div>
                           </div>
                         </div>
-                        
                         <div className="mt-4">
                           <h4 className="font-medium mb-2">Complaining Witness</h4>
                           <div className="flex flex-wrap gap-2">
@@ -137,7 +132,6 @@ const ComplaintsList = ({ complaints, isLoading, expandedComplaint, toggleCompla
                             )}
                           </div>
                         </div>
-                        
                         <div className="mt-4 grid grid-cols-2 gap-4">
                           <div>
                             <h4 className="font-medium mb-2">Address</h4>
@@ -148,7 +142,6 @@ const ComplaintsList = ({ complaints, isLoading, expandedComplaint, toggleCompla
                             <p className="text-portal-600">{complaint.location_type || "Unknown"}</p>
                           </div>
                         </div>
-                        
                         <div className="mt-4">
                           <h4 className="font-medium mb-2">Documents</h4>
                           <Link 

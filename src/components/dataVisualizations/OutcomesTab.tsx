@@ -1,23 +1,42 @@
-
-import React from 'react';
-import { useOutcomeData } from '@/hooks/useStatisticsData';
+import React, { useMemo } from 'react';
 import { PieChart, Pie, ResponsiveContainer, Cell, Tooltip } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { InfoIcon } from 'lucide-react';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
+import { useMapDataContext } from '@/hooks/useMapDataContext';
+
+const FINDING_COLORS: Record<string, string> = {
+  'Sustained': '#0FA0CE',
+  'Not Sustained': '#F97316',
+  'Exonerated': '#8B5CF6',
+  'Unfounded': '#10B981',
+  'Other': '#94A3B8'
+};
 
 const OutcomesTab = () => {
-  const { data: outcomeData, isLoading: isLoadingOutcomes } = useOutcomeData();
+  const { filteredComplaints } = useMapDataContext();
+
+  // Compute findings and total allegations from filteredComplaints
+  const findingsData = useMemo(() => {
+    const findingsCount: Record<string, number> = {};
+    filteredComplaints.forEach(c => {
+      const finding = c.final_finding || 'Other';
+      findingsCount[finding] = (findingsCount[finding] || 0) + 1;
+    });
+    return Object.entries(findingsCount).map(([name, value]) => ({
+      name,
+      value,
+      color: FINDING_COLORS[name] || FINDING_COLORS['Other']
+    }));
+  }, [filteredComplaints]);
+
+  const totalAllegations = filteredComplaints.length;
 
   const calculatePercentage = () => {
-    if (!outcomeData) return null;
-    
-    const unsustained = outcomeData.findings.find(item => item.name === 'Not Sustained');
-    
+    const unsustained = findingsData.find(item => item.name === 'Not Sustained');
     if (!unsustained) return null;
-    
-    const percentage = ((unsustained.value / outcomeData.totalAllegations) * 100).toFixed(1);
+    const percentage = ((unsustained.value / totalAllegations) * 100).toFixed(1);
     return {
       percentage,
       finding: 'Not Sustained'
@@ -26,20 +45,7 @@ const OutcomesTab = () => {
 
   const percentageInfo = calculatePercentage();
 
-  if (isLoadingOutcomes) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <div className="space-y-3 w-full max-w-md">
-          <div className="h-8 bg-portal-100 rounded-lg animate-pulse w-2/3 mx-auto"></div>
-          <div className="h-36 bg-portal-100 rounded-lg animate-pulse"></div>
-          <div className="h-4 bg-portal-100 rounded w-full animate-pulse"></div>
-          <div className="h-4 bg-portal-100 rounded w-5/6 animate-pulse"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!outcomeData) {
+  if (filteredComplaints.length === 0) {
     return (
       <div className="h-full flex items-center justify-center">
         <p className="text-portal-500">No outcomes data available</p>
@@ -47,16 +53,13 @@ const OutcomesTab = () => {
     );
   }
 
-  // Create an array of findings excluding the first item (which is "Allegations")
-  const findingsData = outcomeData.findings.slice(1);
-
   return (
     <div className="h-full py-2 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-start mb-6 gap-4">
         <div>
           <div className="flex items-center gap-2">
             <h3 className="text-xl font-bold text-portal-900">
-              {outcomeData.totalAllegations.toLocaleString()} Total Allegations
+              {totalAllegations.toLocaleString()} Total Allegations
             </h3>
             <HoverCard>
               <HoverCardTrigger asChild>
@@ -71,14 +74,12 @@ const OutcomesTab = () => {
             </HoverCard>
           </div>
           <div className="h-px w-36 bg-portal-300 my-2" />
-          
           {percentageInfo && (
             <p className="text-portal-700 text-sm">
               <span className="font-semibold">{percentageInfo.percentage}%</span> of allegations were found "{percentageInfo.finding}"
             </p>
           )}
         </div>
-        
         <div className="flex flex-wrap gap-2 justify-end">
           {findingsData.slice(0, 5).map((item, index) => (
             <div 
@@ -92,7 +93,6 @@ const OutcomesTab = () => {
           ))}
         </div>
       </div>
-      
       <div className="grid grid-cols-1 md:grid-cols-5 gap-6 h-[240px]">
         <Card className="md:col-span-2">
           <CardHeader className="pb-2">
@@ -109,7 +109,7 @@ const OutcomesTab = () => {
                   <div className="flex items-center space-x-2">
                     <span className="text-sm font-bold">{item.value.toLocaleString()}</span>
                     <span className="text-xs text-portal-500">
-                      ({((item.value / outcomeData.totalAllegations) * 100).toFixed(1)}%)
+                      ({((item.value / totalAllegations) * 100).toFixed(1)}%)
                     </span>
                   </div>
                 </div>
@@ -117,7 +117,6 @@ const OutcomesTab = () => {
             </div>
           </CardContent>
         </Card>
-        
         <div className="relative h-full md:col-span-3">
           <ChartContainer
             config={{
@@ -162,7 +161,7 @@ const OutcomesTab = () => {
                           <div className="flex items-center justify-between gap-4">
                             <span>{value.toLocaleString()}</span>
                             <span className="text-xs text-portal-500">
-                              ({((Number(value) / outcomeData.totalAllegations) * 100).toFixed(1)}%)
+                              ({((Number(value) / totalAllegations) * 100).toFixed(1)}%)
                             </span>
                           </div>
                         </div>
