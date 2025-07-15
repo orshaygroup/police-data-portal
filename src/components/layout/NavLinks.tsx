@@ -26,6 +26,14 @@ const NavLinks = () => {
       <Link to="/ranking" className={`transition-colors ${isActive('/ranking')}`}>
         Rankings
       </Link>
+      <a 
+        href="https://nolaoipm.callsplus.net/#/" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="transition-colors text-portal-600 hover:text-portal-900 bg-primary text-primary-foreground px-3 py-1 rounded-md font-medium"
+      >
+        File Complaint
+      </a>
     </div>
   );
 };

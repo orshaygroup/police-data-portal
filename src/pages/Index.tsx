@@ -43,12 +43,7 @@ const Index = () => {
 
           {/* Mapbox Integration - replacing iframe */}
           <div className="rounded-2xl h-[400px] mb-12 overflow-hidden">
-            <MapView 
-              height="400px" 
-              initialZoom={10.33}
-              initialCenter={[-89.9019, 30.0247]}
-              heatmapLayer={true}
-            />
+            <MapView />
           </div>
         </section>
 

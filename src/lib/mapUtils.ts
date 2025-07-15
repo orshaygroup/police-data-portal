@@ -1,4 +1,4 @@
-import * as turf from '@turf/turf';
+import { point, booleanPointInPolygon } from '@turf/turf';
 
 // Complaint type for filtering
 export interface ComplaintForFilter {
@@ -9,14 +9,14 @@ export interface ComplaintForFilter {
 }
 
 // Check if a point is inside a polygon (GeoJSON)
-export function isPointInPolygon(point: [number, number], polygon: turf.Feature<turf.Polygon | turf.MultiPolygon>): boolean {
-  const pt = turf.point(point);
-  return turf.booleanPointInPolygon(pt, polygon);
+export function isPointInPolygon(pointCoords: [number, number], polygon: any): boolean {
+  const pt = point(pointCoords);
+  return booleanPointInPolygon(pt, polygon);
 }
 
 // Filter complaints by area geometry (GeoJSON)
-export function filterComplaintsByArea(complaints: ComplaintForFilter[], areaGeoJson: turf.Feature<turf.Polygon | turf.MultiPolygon>) {
+export function filterComplaintsByArea(complaints: ComplaintForFilter[], areaGeoJson: any) {
   return complaints.filter(c =>
     isPointInPolygon([c.longitude, c.latitude], areaGeoJson)
   );
-} 
+}
