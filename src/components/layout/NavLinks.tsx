@@ -26,14 +26,11 @@ const NavLinks = () => {
       <Link to="/ranking" className={`transition-colors ${isActive('/ranking')}`}>
         Rankings
       </Link>
-      <Link to="/resources" className={`transition-colors ${isActive('/resources')}`}>
-        Resources
-      </Link>
       <a 
         href="https://nolaoipm.callsplus.net/#/" 
         target="_blank" 
         rel="noopener noreferrer"
-        className="transition-colors bg-primary text-primary-foreground hover:bg-primary/90 px-3 py-1 rounded-md font-medium"
+        className="transition-colors text-portal-600 hover:text-portal-900"
       >
         File Complaint
       </a>
